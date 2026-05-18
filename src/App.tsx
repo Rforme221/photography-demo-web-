@@ -7,6 +7,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'motion/react';
 import { Instagram, Twitter, Linkedin, ArrowDown, ChevronRight, Menu, X } from 'lucide-react';
 
+import heroVideo from './assets/flova_Standalone_cinemagraph_loop_video_202605181148_0d503d.mp4';
+
 // --- Types & Constants ---
 const GENRES = ['WEDDINGS', 'EDITORIAL', 'PORTRAITURE', 'FASHION', 'COMMERCIAL', 'FINE ART', 'DESTINATION'];
 
@@ -318,42 +320,72 @@ export default function App() {
 
       <main>
         {/* [02] HERO */}
-        <section className="relative h-screen overflow-hidden">
+        <section className="relative h-screen overflow-hidden bg-[#0a0a0a]">
           <div className="absolute inset-0 z-0">
             <FadingVideo 
-              src="/flova_Standalone_cinemagraph_loop_video_202605181148_0d503d.mp4"
+              src={heroVideo}
               fallbackImage="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80"
               opacity={heroOpacity}
             />
           </div>
           
-          <div className="absolute inset-0 bg-[#0D0D0D]/20 z-10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0D0D0D]/40 via-transparent to-[#0D0D0D]/60 z-10" />
+          <div className="absolute inset-0 bg-radial-gradient from-transparent to-[#0D0D0D]/40 z-10 pointer-events-none" />
 
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
-            <h1 className="font-display text-[11vw] sm:text-7xl md:text-9xl flex items-center gap-3 sm:gap-8 overflow-hidden py-10">
-              <motion.span 
-                className="opacity-90"
-                style={{ x: useTransform(scrollY, [0, 500], [0, -60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col items-center"
+            >
+              <h1 className="font-display text-[11vw] sm:text-7xl md:text-9xl flex items-center gap-3 sm:gap-8 overflow-hidden py-4 sm:py-10">
+                <motion.span 
+                  className="opacity-90 leading-none"
+                  style={{ x: useTransform(scrollY, [0, 500], [0, -60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
+                >
+                  FRAME
+                </motion.span>
+                <motion.span 
+                  initial={{ height: 0 }}
+                  animate={{ height: "4rem" }}
+                  transition={{ delay: 0.5, duration: 1 }}
+                  className="w-[1px] sm:h-24 bg-gold/50 mx-1 sm:mx-4"
+                ></motion.span>
+                <motion.span 
+                  className="opacity-90 leading-none"
+                  style={{ x: useTransform(scrollY, [0, 500], [0, 60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
+                >
+                  EVERYTHING
+                </motion.span>
+              </h1>
+              
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                transition={{ delay: 1, duration: 1 }}
+                className="mt-2 font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.6em] text-center max-w-[280px] sm:max-w-none leading-relaxed"
               >
-                FRAME
-              </motion.span>
-              <span className="w-[1px] h-10 sm:h-24 bg-gold mx-1 sm:mx-4"></span>
-              <motion.span 
-                className="opacity-90"
-                style={{ x: useTransform(scrollY, [0, 500], [0, 60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
-              >
-                EVERYTHING
-              </motion.span>
-            </h1>
-            <div className="mt-2 font-mono text-[8px] sm:text-[10px] uppercase opacity-50 tracking-[0.4em] text-center max-w-[280px] sm:max-w-none leading-relaxed">Visual Narrative • Editorial Archive</div>
+                Visual Narrative • Editorial Archive • MMXXVI
+              </motion.div>
+            </motion.div>
           </div>
 
           <motion.div 
             style={{ opacity: heroOpacity }}
-            className="absolute bottom-12 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5, duration: 1 }}
+            className="absolute bottom-12 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4"
           >
-            <span className="font-mono text-[9px] tracking-[0.4em] uppercase opacity-40">Scroll</span>
-            <div className="w-px h-12 bg-gradient-to-b from-gold to-transparent opacity-50" />
+            <span className="font-mono text-[9px] tracking-[0.5em] uppercase opacity-40">Discovery</span>
+            <div className="relative w-px h-16 sm:h-20 bg-white/10 overflow-hidden">
+              <motion.div 
+                animate={{ y: ["-100%", "100%"] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-gold to-transparent"
+              />
+            </div>
           </motion.div>
         </section>
 
@@ -577,9 +609,14 @@ export default function App() {
             {TESTIMONIALS.map((t, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.2 }}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ 
+                  duration: 0.9, 
+                  delay: i * 0.15,
+                  ease: [0.22, 1, 0.36, 1]
+                }}
                 className="flex flex-col gap-8"
               >
                 <p className="font-display text-2xl italic leading-relaxed text-paper/90">
