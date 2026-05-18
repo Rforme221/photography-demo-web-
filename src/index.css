@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+
+@theme {
+  --color-base: #0D0D0D;
+  --color-paper: #F2EDE6;
+  --color-gold: #C8A97E;
+  --color-card: #2A2A2A;
+  --color-ember: #FF5733;
+
+  --font-display: "Cormorant Garamond", serif;
+  --font-mono: "DM Mono", monospace;
+  
+  --border-editorial: 1px solid #2A2A2A;
+}
+
+:root {
+  --bg-color: #0D0D0D;
+  --text-color: #F2EDE6;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-mono);
+  overflow-x: hidden;
+  transition: background-color 0.6s ease;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(#ffffff0a 0.5px, transparent 0.5px); 
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.2;
+}
+
+.editorial-border-b {
+  border-bottom: var(--border-editorial);
+}
+
+.editorial-border-t {
+  border-top: var(--border-editorial);
+}
+
+.editorial-border-l {
+  border-left: var(--border-editorial);
+}
+
+.editorial-border-r {
+  border-right: var(--border-editorial);
+}
+
+.cursor-follower {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-gold);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s, border-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cursor-follower::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--color-gold);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+.magnetic-area {
+  position: relative;
+  display: inline-block;
+}
+
+.dark-room-active {
+  --bg-color: #050505;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+::-webkit-scrollbar-thumb {
+  background: #C8A97E;
+}

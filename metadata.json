@@ -1,0 +1,8 @@
+{
+  "name": "Nep.Photography",
+  "description": "A cinematic, minimalist photography portfolio for high-end wedding and editorial clients.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
