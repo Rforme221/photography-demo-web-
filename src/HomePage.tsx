@@ -15,7 +15,7 @@ interface HomePagePortfolioItemProps {
   hoveredImageId: number | null;
   setHoveredImageId: (id: number | null) => void;
   setIsHoveringImage: (is: boolean) => void;
-  setSelectedProject: (p: any) => void;
+  setSelectedProject: (p: typeof PORTFOLIO_ITEMS[0] | null) => void;
 }
 
 const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({ 
@@ -60,7 +60,7 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
       }}
     >
       <div 
-        className={`transition-all duration-700 overflow-hidden aspect-[4/5] ${item.size === 'large' ? 'md:aspect-video' : 'md:aspect-[4/5]'}`}
+        className={`relative transition-all duration-700 overflow-hidden aspect-[4/5] ${item.size === 'large' ? 'md:aspect-video' : 'md:aspect-[4/5]'}`}
         style={{
           filter: hoveredImageId === null 
             ? 'grayscale(0%) opacity(1)' 
@@ -77,6 +77,23 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
           alt={item.title} 
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
         />
+        
+        {/* Subtle Gold Grid Overlay on Hover */}
+        <div className="absolute inset-0 pointer-events-none z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+          {/* Vertical Grid Lines */}
+          <div className="absolute left-1/3 top-0 bottom-0 w-[0.5px] bg-gold/30 origin-top scale-y-0 group-hover:scale-y-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[50ms]" />
+          <div className="absolute left-2/3 top-0 bottom-0 w-[0.5px] bg-gold/30 origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[150ms]" />
+          
+          {/* Horizontal Grid Lines */}
+          <div className="absolute top-1/3 left-0 right-0 h-[0.5px] bg-gold/30 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[100ms]" />
+          <div className="absolute top-2/3 left-0 right-0 h-[0.5px] bg-gold/30 origin-right scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[200ms]" />
+          
+          {/* Minimalist Viewfinder Framing Brackets */}
+          <div className="absolute top-3 left-3 w-2 h-2 border-t border-l border-gold/40 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
+          <div className="absolute top-3 right-3 w-2 h-2 border-t border-r border-gold/40 transition-transform duration-500 group-hover:-translate-x-0.5 group-hover:translate-y-0.5" />
+          <div className="absolute bottom-3 left-3 w-2 h-2 border-b border-l border-gold/40 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <div className="absolute bottom-3 right-3 w-2 h-2 border-b border-r border-gold/40 transition-transform duration-500 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5" />
+        </div>
       </div>
       <motion.div 
         style={{ opacity: useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]) }}
@@ -96,7 +113,7 @@ export default function HomePage() {
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
   const [isHoveringImage, setIsHoveringImage] = useState(false);
   const [beforeAfterProgress, setBeforeAfterProgress] = useState(1);
-  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [activeFilter, setActiveFilter] = useState('WEDDINGS');
   const [selectedProject, setSelectedProject] = useState<typeof PORTFOLIO_ITEMS[0] | null>(null);
   const [activeProcessStep, setActiveProcessStep] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -123,6 +140,19 @@ export default function HomePage() {
   
   const { scrollY } = useScroll();
   const heroOpacity = useTransform(scrollY, [0, 500], [1, 0]);
+
+  // Parallax Scroll Tracking for About Section
+  const aboutSectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress: aboutScrollProgress } = useScroll({
+    target: aboutSectionRef,
+    offset: ["start end", "end start"]
+  });
+
+  const bgYRaw = useTransform(aboutScrollProgress, [0, 1], [-55, 55]);
+  const fgYRaw = useTransform(aboutScrollProgress, [0, 1], [-15, 15]);
+
+  const bgY = useSpring(bgYRaw, { stiffness: 80, damping: 24, mass: 0.4 });
+  const fgY = useSpring(fgYRaw, { stiffness: 80, damping: 24, mass: 0.4 });
 
   useEffect(() => {
     if (selectedProject) {
@@ -167,6 +197,14 @@ export default function HomePage() {
     return PORTFOLIO_ITEMS.filter(item => item.type === activeFilter).slice(0, 6);
   }, [activeFilter]);
 
+  const handleScrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className={`min-h-screen transition-colors duration-600 ${darkRoom ? 'dark-room-active' : ''}`}>
       <div className="noise-overlay" />
@@ -195,7 +233,14 @@ export default function HomePage() {
         
         <nav className="hidden md:flex items-center justify-center gap-10 text-[11px] opacity-70 lg:flex-1">
           {['About', 'Work', 'Process', 'Contact'].map(item => (
-            <a key={item} href={`#${item.toLowerCase()}`} className="hover:text-gold transition-colors hover:opacity-100">{item}</a>
+            <a 
+              key={item} 
+              href={`#${item.toLowerCase()}`} 
+              onClick={(e) => handleScrollToSection(e, item.toLowerCase())}
+              className="hover:text-gold transition-colors hover:opacity-100"
+            >
+              {item}
+            </a>
           ))}
         </nav>
 
@@ -236,7 +281,10 @@ export default function HomePage() {
                         ease: [0.22, 1, 0.36, 1] 
                       }}
                       href={`#${item.toLowerCase()}`} 
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={(e) => {
+                        setIsMobileMenuOpen(false);
+                        handleScrollToSection(e, item.toLowerCase());
+                      }}
                       className="font-display text-6xl uppercase tracking-tighter hover:text-gold transition-colors block"
                     >
                       {item}
@@ -360,7 +408,7 @@ export default function HomePage() {
           >
             <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none opacity-90 w-full lg:w-auto">Editorial<br />Archive.</h2>
             <div className="flex flex-wrap gap-2 sm:gap-4 font-mono text-[10px] tracking-widest w-full lg:w-auto">
-              {['ALL', ...GENRES.slice(0, 4)].map(filter => (
+              {GENRES.map(filter => (
                 <button 
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
@@ -534,7 +582,7 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        <section id="about" className="py-24 sm:py-40 px-6 sm:px-10 bg-base border-y border-[#2A2A2A]">
+        <section id="about" ref={aboutSectionRef} className="py-24 sm:py-40 px-6 sm:px-10 bg-base border-y border-[#2A2A2A]">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-16 md:gap-24 items-center">
             <div 
               className="relative w-full max-w-md aspect-[3/4] cursor-ew-resize select-none overflow-hidden border border-[#2A2A2A] touch-none"
@@ -555,23 +603,25 @@ export default function HomePage() {
               onMouseLeave={() => setBeforeAfterProgress(1)}
               onTouchEnd={() => setBeforeAfterProgress(1)}
             >
-              <img 
+              <motion.img 
                 src="/src/assets/images/about_section_portrait_1779019597653.png" 
-                className="absolute inset-0 w-full h-full object-cover grayscale sepia brightness-50"
+                className="absolute inset-x-0 -inset-y-16 w-full h-[calc(100%+128px)] object-cover grayscale sepia brightness-50"
                 alt="Portrait Reveal Background"
                 referrerPolicy="no-referrer"
                 loading="lazy"
+                style={{ y: bgY }}
               />
               <div 
                 className="absolute inset-0 overflow-hidden"
                 style={{ clipPath: `inset(0 ${100 - beforeAfterProgress * 100}% 0 0)` }}
               >
-                <img 
+                <motion.img 
                   src="/src/assets/images/about_section_portrait_1779019597653.png"
-                  className="w-full h-full object-cover"
+                  className="absolute inset-x-0 -inset-y-16 w-full h-[calc(100%+128px)] object-cover"
                   alt="Portrait Reveal Foreground"
                   referrerPolicy="no-referrer"
                   loading="lazy"
+                  style={{ y: fgY }}
                 />
               </div>
               <div 
@@ -630,7 +680,7 @@ export default function HomePage() {
         </section>
         
         <section className="py-24 bg-base border-y border-white/5 overflow-hidden">
-          <div className="flex gap-4 px-4 overflow-x-auto pb-8 md:pb-0 hide-scrollbar scroll-smooth snap-x md:justify-center">
+          <div className="flex gap-4 px-4 overflow-x-scroll pb-8 md:pb-0 hide-scrollbar scroll-smooth snap-x md:justify-center">
             {[1, 2, 3, 4, 5, 6].map((i) => {
               const src = i === 1 
                 ? "/src/assets/images/regenerated_image_1779089289089.jpg"
@@ -650,7 +700,7 @@ export default function HomePage() {
                   <img 
                     loading="lazy"
                     src={src} 
-                    alt="" 
+                    alt={`NEP Photography Studio Gallery Image ${i}`} 
                     className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-base/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -800,7 +850,7 @@ export default function HomePage() {
               className="relative w-full max-w-6xl h-full max-h-[90vh] bg-[#111] border border-[#2A2A2A] flex flex-col md:flex-row overflow-hidden shadow-2xl"
             >
               <button className="absolute top-6 right-6 z-50 p-2 text-white/50 hover:text-gold transition-colors" onClick={() => setSelectedProject(null)}><X size={24} /></button>
-              <div className="w-full md:w-3/5 h-[40vh] md:h-auto overflow-hidden">
+              <div className="w-full md:w-3/5 h-[40vh] md:h-auto overflow-hidden bg-black/20">
                 <motion.img 
                   key={selectedProject.image}
                   initial={{ scale: 1.2, opacity: 0 }}
@@ -808,6 +858,7 @@ export default function HomePage() {
                   transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
                   src={selectedProject.image} 
                   alt={selectedProject.title} 
+                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />
               </div>
