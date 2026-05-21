@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'motion/react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Instagram, Twitter, Linkedin, ArrowDown, ChevronRight, ChevronLeft, Menu, X } from 'lucide-react';
 
@@ -33,7 +33,15 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
   });
 
   const y = useTransform(scrollYProgress, [0, 1], [-20, 20]);
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.95, 1, 0.95]);
+
+  // High-fidelity hover mouse tracking dynamic springs
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const mouseScale = useMotionValue(1.05);
+
+  const hoverX = useSpring(mouseX, { stiffness: 90, damping: 22 });
+  const hoverY = useSpring(mouseY, { stiffness: 90, damping: 22 });
+  const hoverScale = useSpring(mouseScale, { stiffness: 90, damping: 22 });
 
   return (
     <motion.div
@@ -50,13 +58,24 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
       }}
       className={`relative group cursor-none overflow-hidden [transform-style:preserve-3d] border-r border-b border-[#2A2A2A] p-6 ${item.size === 'large' ? 'md:col-span-3' : 'md:col-span-2'}`}
       onClick={() => setSelectedProject(item)}
+      onMouseMove={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 to 0.5
+        const y = (e.clientY - rect.top) / rect.height - 0.5; // -0.5 to 0.5
+        mouseX.set(x * 16); // subtle shift (16px max displacement)
+        mouseY.set(y * 16);
+      }}
       onMouseEnter={() => {
         setHoveredImageId(item.id);
         setIsHoveringImage(true);
+        mouseScale.set(1.15); // Luxurious lens-zoom on hover
       }}
       onMouseLeave={() => {
         setHoveredImageId(null);
         setIsHoveringImage(false);
+        mouseX.set(0);
+        mouseY.set(0);
+        mouseScale.set(1.05); // Smoothly rest to default bounds
       }}
     >
       <div 
@@ -69,14 +88,18 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
               : 'grayscale(100%) opacity(0.2) blur(2px)'
         }}
       >
-        <motion.img 
-          style={{ y, scale: 1.1 }}
-          loading="lazy" 
-          referrerPolicy="no-referrer"
-          src={item.image} 
-          alt={item.title} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-        />
+        <div className="absolute inset-x-0 -inset-y-12 overflow-hidden pointer-events-none">
+          <motion.div style={{ y }} className="w-full h-full">
+            <motion.img 
+              style={{ x: hoverX, y: hoverY, scale: hoverScale }}
+              loading="lazy" 
+              referrerPolicy="no-referrer"
+              src={item.image} 
+              alt={item.title} 
+              className="w-full h-full object-cover" 
+            />
+          </motion.div>
+        </div>
         
         {/* Subtle Gold Grid Overlay on Hover */}
         <div className="absolute inset-0 pointer-events-none z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700">

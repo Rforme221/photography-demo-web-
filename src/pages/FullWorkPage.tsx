@@ -29,13 +29,12 @@ const PortfolioItemCard: React.FC<FullWorkPortfolioItemProps> = ({
     <motion.div
       ref={ref}
       layout
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -20 }}
       transition={{ 
-        duration: 0.8, 
-        delay: idx % 3 * 0.1,
-        ease: [0.22, 1, 0.36, 1] 
+        duration: 0.6, 
+        ease: [0.16, 1, 0.3, 1] 
       }}
       className="group cursor-pointer"
       onClick={() => setSelectedProject(item)}
