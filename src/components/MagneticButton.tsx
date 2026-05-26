@@ -37,8 +37,8 @@ export const MagneticButton = ({ children, className, primary = false, onClick }
         transition={{ type: 'spring', stiffness: 150, damping: 15, mass: 0.1 }}
         className={`px-8 py-4 transition-colors font-mono text-sm tracking-widest uppercase ${
           primary 
-            ? "bg-gold text-base hover:bg-opacity-90" 
-            : "border border-gold text-gold hover:bg-gold hover:text-base"
+            ? "bg-orange text-black font-bold border border-orange hover:bg-opacity-90" 
+            : "border border-orange text-orange hover:bg-orange hover:text-black"
         } ${className}`}
       >
         {children}

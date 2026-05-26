@@ -2,16 +2,46 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
 
 @theme {
-  --color-base: #0D0D0D;
-  --color-paper: #F2EDE6;
-  --color-gold: #C8A97E;
-  --color-card: #2A2A2A;
-  --color-ember: #FF5733;
+  --color-base: #000000;
+  --color-paper: #FFFFFF;
+  --color-card: #0A0A0A;
+  
+  /* Brand Deep Purple Palette (Extracted #8B2A92) */
+  --color-purple-50: #FDF4FE;
+  --color-purple-100: #F9E7FC;
+  --color-purple-200: #F3CFF9;
+  --color-purple-300: #EAA7F3;
+  --color-purple-400: #DB72E8;
+  --color-purple-500: #A83BB0;
+  --color-purple-600: #8B2A92; /* Core logo deep purple */
+  --color-purple-700: #701A75;
+  --color-purple-800: #58125D;
+  --color-purple-900: #4A104E;
+  --color-purple-950: #1C0121;
+
+  /* Brand Vibrant Orange Palette (Extracted #DC6A22 & Accessories) */
+  --color-orange-50: #FFF9F5;
+  --color-orange-100: #FFEFE5;
+  --color-orange-200: #FFDCC8;
+  --color-orange-300: #FFAF87;
+  --color-orange-400: #FF834B;
+  --color-orange-500: #DC6A22; /* Core logo orange */
+  --color-orange-600: #DC4C04; /* High-intensity orange highlight */
+  --color-orange-700: #A83600;
+  --color-orange-800: #7E2600;
+  --color-orange-900: #541900;
+  --color-orange-950: #2C0600;
+
+  /* Aliasing for site components */
+  --color-gold: var(--color-purple-600); /* Maps existing gold accents to deep purple brand */
+  --color-purple: var(--color-purple-600);
+  --color-orange: var(--color-orange-500);
+  --color-ember: var(--color-orange-600);
 
   --font-display: "Cormorant Garamond", serif;
   --font-mono: "DM Mono", monospace;
   
-  --border-editorial: 1px solid #2A2A2A;
+  --border-editorial: 1px solid rgba(139, 42, 146, 0.25);
 }
 
 html {
@@ -23,8 +53,8 @@ section[id] {
 }
 
 :root {
-  --bg-color: #0D0D0D;
-  --text-color: #F2EDE6;
+  --bg-color: #000000;
+  --text-color: #FFFFFF;
 }
 
 body {
@@ -77,7 +107,7 @@ body {
   position: fixed;
   width: 40px;
   height: 40px;
-  border: 1px solid var(--color-gold);
+  border: 1px solid var(--color-orange);
   border-radius: 50%;
   pointer-events: none;
   z-index: 10000;
@@ -92,7 +122,7 @@ body {
   content: '';
   width: 8px;
   height: 8px;
-  border: 1px solid var(--color-gold);
+  border: 1px solid var(--color-orange);
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -108,7 +138,7 @@ body {
 }
 
 .dark-room-active {
-  --bg-color: #050505;
+  --bg-color: #000000;
 }
 
 /* Custom Scrollbar */
@@ -116,10 +146,10 @@ body {
   width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: #0D0D0D;
+  background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C8A97E;
+  background: #FF6A00;
 }
 
 .hide-scrollbar::-webkit-scrollbar {

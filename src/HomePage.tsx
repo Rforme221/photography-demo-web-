@@ -4,10 +4,13 @@ import { Link } from 'react-router-dom';
 import { Instagram, Twitter, Linkedin, ArrowDown, ChevronRight, ChevronLeft, Menu, X } from 'lucide-react';
 
 import heroVideo from './assets/flova_Standalone_cinemagraph_loop_video_202605181148_0d503d.mp4';
-import { GENRES, PORTFOLIO_ITEMS, STATS, TESTIMONIALS } from './constants';
+import { GENRES, PORTFOLIO_ITEMS, STATS, TESTIMONIALS, resolveAsset } from './constants';
 import { MagneticButton } from './components/MagneticButton';
 import { Counter } from './components/Counter';
 import { FadingVideo } from './components/FadingVideo';
+import { useLanguage } from './context/LanguageContext';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { Lightbox } from './components/Lightbox';
 
 interface HomePagePortfolioItemProps {
   item: typeof PORTFOLIO_ITEMS[0];
@@ -26,7 +29,9 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
   setIsHoveringImage, 
   setSelectedProject 
 }) => {
+  const { getProjectTitle, getGenreLabel } = useLanguage();
   const ref = useRef(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"]
@@ -89,15 +94,33 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
         }}
       >
         <div className="absolute inset-x-0 -inset-y-12 overflow-hidden pointer-events-none">
-          <motion.div style={{ y }} className="w-full h-full">
-            <motion.img 
-              style={{ x: hoverX, y: hoverY, scale: hoverScale }}
-              loading="lazy" 
-              referrerPolicy="no-referrer"
-              src={item.image} 
-              alt={item.title} 
-              className="w-full h-full object-cover" 
-            />
+          <motion.div style={{ y }} className="w-full h-full relative bg-[#0C0C0C]">
+            {!isLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#070707] z-10">
+                <div className="w-12 h-12 border border-[#2A2A2A] flex items-center justify-center animate-pulse">
+                  <div className="w-2.5 h-2.5 bg-gold/20 rounded-full" />
+                </div>
+              </div>
+            )}
+            <motion.div 
+              initial={{ filter: 'blur(15px)', opacity: 0 }}
+              animate={{ 
+                filter: isLoaded ? 'blur(0px)' : 'blur(15px)',
+                opacity: isLoaded ? 1 : 0
+              }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full h-full"
+            >
+              <motion.img 
+                style={{ x: hoverX, y: hoverY, scale: hoverScale }}
+                loading="lazy" 
+                referrerPolicy="no-referrer"
+                src={resolveAsset(item.image)} 
+                alt={item.title} 
+                onLoad={() => setIsLoaded(true)}
+                className="w-full h-full object-cover" 
+              />
+            </motion.div>
           </motion.div>
         </div>
         
@@ -122,26 +145,38 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
         style={{ opacity: useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]) }}
         className="mt-4 flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40"
       >
-        <span className="bg-[#0D0D0D] px-2 py-1">0{idx+1} / {item.type}</span>
-        <span className="text-[#F2EDE6]/60 group-hover:text-gold transition-colors">{item.title}</span>
+        <span className="bg-[#0D0D0D] px-2 py-1">0{idx+1} / {getGenreLabel(item.type)}</span>
+        <span className="text-[#F2EDE6]/60 group-hover:text-gold transition-colors">{getProjectTitle(item.title)}</span>
       </motion.div>
     </motion.div>
   );
 };
 
 export default function HomePage() {
+  const { t, language, getProjectTitle, getGenreLabel } = useLanguage();
   const [darkRoom, setDarkRoom] = useState(() => localStorage.getItem('darkroom') === 'true');
   const [isScrolled, setIsScrolled] = useState(false);
   const [hoveredImageId, setHoveredImageId] = useState<number | null>(null);
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  const cursorSpringX = useSpring(cursorX, { stiffness: 450, damping: 28, mass: 0.4 });
+  const cursorSpringY = useSpring(cursorY, { stiffness: 450, damping: 28, mass: 0.4 });
   const [isHoveringImage, setIsHoveringImage] = useState(false);
   const [beforeAfterProgress, setBeforeAfterProgress] = useState(1);
-  const [activeFilter, setActiveFilter] = useState('WEDDINGS');
+  const [activeFilter, setActiveFilter] = useState('WILDLIFE');
   const [selectedProject, setSelectedProject] = useState<typeof PORTFOLIO_ITEMS[0] | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const [activeProcessStep, setActiveProcessStep] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success'>('idle');
+  const [aboutExpanded, setAboutExpanded] = useState(false);
+
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [selectedProject?.id]);
 
   const handlePrevProject = () => {
     setSelectedProject((current) => {
@@ -187,9 +222,15 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    const handleMouseMove = (e: MouseEvent) => setCursorPos({ x: e.clientX, y: e.clientY });
+    const handleMouseMove = (e: MouseEvent) => {
+      cursorX.set(e.clientX);
+      cursorY.set(e.clientY);
+    };
     const checkTouch = () => setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.getElementById('full-screen-lightbox')) {
+        return; // Let the Lightbox handle its own keyboard shortcuts
+      }
       if (e.key === 'Escape') setSelectedProject(null);
       if (e.key === 'ArrowLeft') handlePrevProject();
       if (e.key === 'ArrowRight') handleNextProject();
@@ -220,8 +261,8 @@ export default function HomePage() {
     return PORTFOLIO_ITEMS.filter(item => item.type === activeFilter).slice(0, 6);
   }, [activeFilter]);
 
-  const handleScrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
-    e.preventDefault();
+  const handleScrollToSection = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement> | null | undefined, targetId: string) => {
+    if (e && e.preventDefault) e.preventDefault();
     const element = document.getElementById(targetId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -235,13 +276,17 @@ export default function HomePage() {
       {!isTouchDevice && (
         <motion.div 
           className="cursor-follower"
+          style={{ 
+            x: cursorSpringX, 
+            y: cursorSpringY,
+            translateX: "-50%",
+            translateY: "-50%"
+          }}
           animate={{ 
-            x: cursorPos.x, 
-            y: cursorPos.y,
             scale: isHoveringImage ? 1.5 : 1,
             opacity: isHoveringImage ? 1 : 0
           }}
-          transition={{ type: 'spring', stiffness: 500, damping: 28, mass: 0.5 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         />
       )}
 
@@ -251,25 +296,36 @@ export default function HomePage() {
         }`}
       >
         <Link to="/" className="flex items-center gap-2 group cursor-pointer lg:flex-1">
-          <span className="text-xl font-bold tracking-tighter">NEP<span className="text-gold">.</span>PHOTO</span>
+          <img 
+            src={resolveAsset("/src/assets/images/Logo/309609011_502923838511265_499136910629103232_n-Photoroom.png")} 
+            alt="NEP.PHOTO" 
+            className="h-12 md:h-14 w-auto object-contain select-none transition-transform duration-300 group-hover:scale-105"
+            referrerPolicy="no-referrer"
+          />
         </Link>
         
         <nav className="hidden md:flex items-center justify-center gap-10 text-[11px] opacity-70 lg:flex-1">
-          {['About', 'Work', 'Process', 'Contact'].map(item => (
+          {[
+            { key: 'nav.about', id: 'about' },
+            { key: 'nav.work', id: 'work' },
+            { key: 'nav.process', id: 'process' },
+            { key: 'nav.contact', id: 'contact' }
+          ].map(item => (
             <a 
-              key={item} 
-              href={`#${item.toLowerCase()}`} 
-              onClick={(e) => handleScrollToSection(e, item.toLowerCase())}
+              key={item.key} 
+              href={`#${item.id}`} 
+              onClick={(e) => handleScrollToSection(e, item.id)}
               className="hover:text-gold transition-colors hover:opacity-100"
             >
-              {item}
+              {t(item.key as any)}
             </a>
           ))}
         </nav>
 
         <div className="flex items-center gap-6 lg:flex-1 lg:justify-end">
-          <MagneticButton primary className="hidden sm:block text-[10px] py-2 px-6 font-bold">
-            Book Now
+          <LanguageSwitcher className="hidden sm:flex" />
+          <MagneticButton primary className="hidden sm:block text-[10px] py-2 px-6 font-bold" onClick={() => handleScrollToSection(undefined, 'contact')}>
+            {t('nav.book')}
           </MagneticButton>
           
           <button 
@@ -292,8 +348,13 @@ export default function HomePage() {
           >
             <div className="flex flex-col h-full pt-32 px-10">
               <nav className="flex flex-col gap-6">
-                {['About', 'Work', 'Process', 'Contact'].map((item, idx) => (
-                  <div key={item} className="overflow-hidden">
+                {[
+                  { key: 'nav.about', id: 'about' },
+                  { key: 'nav.work', id: 'work' },
+                  { key: 'nav.process', id: 'process' },
+                  { key: 'nav.contact', id: 'contact' }
+                ].map((item, idx) => (
+                  <div key={item.key} className="overflow-hidden">
                     <motion.a 
                       initial={{ x: 100, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
@@ -303,14 +364,14 @@ export default function HomePage() {
                         delay: 0.2 + idx * 0.1, 
                         ease: [0.22, 1, 0.36, 1] 
                       }}
-                      href={`#${item.toLowerCase()}`} 
+                      href={`#${item.id}`} 
                       onClick={(e) => {
                         setIsMobileMenuOpen(false);
-                        handleScrollToSection(e, item.toLowerCase());
+                        handleScrollToSection(e, item.id);
                       }}
                       className="font-display text-6xl uppercase tracking-tighter hover:text-gold transition-colors block"
                     >
-                      {item}
+                      {t(item.key as any)}
                     </motion.a>
                   </div>
                 ))}
@@ -321,14 +382,21 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ delay: 0.6, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="mt-auto pb-12 flex flex-col gap-10"
+                className="mt-auto pb-12 flex flex-col gap-8"
               >
+                <div className="flex justify-center mb-2">
+                  <LanguageSwitcher />
+                </div>
+                
                 <MagneticButton 
                   primary 
                   className="w-full py-6 text-lg font-bold" 
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleScrollToSection(undefined, 'contact');
+                  }}
                 >
-                  Book a Session
+                  {t('nav.book')}
                 </MagneticButton>
                 
                 <div className="flex flex-col gap-4">
@@ -367,7 +435,7 @@ export default function HomePage() {
                   className="leading-none"
                   style={{ x: useTransform(scrollY, [0, 500], [0, -60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
                 >
-                  FRAME
+                  {t('hero.title.frame')}
                 </motion.span>
                 <motion.span 
                   initial={{ height: 0 }}
@@ -379,16 +447,16 @@ export default function HomePage() {
                   className="leading-none"
                   style={{ x: useTransform(scrollY, [0, 500], [0, 60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
                 >
-                  EVERYTHING
+                  {t('hero.title.everything')}
                 </motion.span>
               </h1>
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.5 }}
                 transition={{ delay: 1, duration: 1 }}
-                className="mt-2 font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.6em] text-center max-w-[280px] sm:max-w-none leading-relaxed text-white"
+                className="mt-2 font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.6em] text-center max-w-[280px] sm:max-w-none leading-relaxed text-white whitespace-pre-line"
               >
-                Visual Narrative • Editorial Archive • MMXXVI
+                {t('hero.subtitle')}
               </motion.div>
             </motion.div>
           </div>
@@ -399,7 +467,7 @@ export default function HomePage() {
             transition={{ delay: 1.5, duration: 1 }}
             className="absolute bottom-12 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4"
           >
-            <span className="font-mono text-[9px] tracking-[0.5em] uppercase opacity-40 text-white">Discovery</span>
+            <span className="font-mono text-[9px] tracking-[0.5em] uppercase opacity-40 text-white">{language === 'IT' ? 'Scoperta' : 'Discovery'}</span>
             <div className="relative w-px h-16 sm:h-20 bg-white/10 overflow-hidden">
               <motion.div 
                 animate={{ y: ["-100%", "100%"] }}
@@ -414,7 +482,7 @@ export default function HomePage() {
           <div className="flex animate-[marquee_30s_linear_infinite]">
             {[...GENRES, ...GENRES].map((genre, idx) => (
               <div key={idx} className="flex items-center px-10 gap-10">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">{genre}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">{getGenreLabel(genre)}</span>
                 <span className="text-gold">•</span>
               </div>
             ))}
@@ -429,7 +497,9 @@ export default function HomePage() {
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col lg:flex-row items-end lg:items-end justify-between mb-16 gap-8"
           >
-            <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none opacity-90 w-full lg:w-auto">Editorial<br />Archive.</h2>
+            <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none opacity-90 w-full lg:w-auto">
+              {language === 'IT' ? <>Archivio<br />Editoriale.</> : <>Editorial<br />Archive.</>}
+            </h2>
             <div className="flex flex-wrap gap-2 sm:gap-4 font-mono text-[10px] tracking-widest w-full lg:w-auto">
               {GENRES.map(filter => (
                 <button 
@@ -437,7 +507,7 @@ export default function HomePage() {
                   onClick={() => setActiveFilter(filter)}
                   className={`px-3 sm:px-4 py-2 border transition-all ${activeFilter === filter ? 'border-gold text-gold' : 'border-[#2A2A2A] text-white/40 hover:border-white/30'}`}
                 >
-                  {filter}
+                  {getGenreLabel(filter)}
                 </button>
               ))}
             </div>
@@ -461,7 +531,7 @@ export default function HomePage() {
           
           <div className="mt-16 flex justify-center">
             <Link to="/work">
-              <MagneticButton>Explore Full Archive</MagneticButton>
+              <MagneticButton>{language === 'IT' ? 'Esplora l’Archivio Completo' : 'Explore Full Archive'}</MagneticButton>
             </Link>
           </div>
         </section>
@@ -480,7 +550,12 @@ export default function HomePage() {
                 <span className={`font-mono text-4xl md:text-5xl ${idx === 0 ? 'text-gold' : 'text-[#F2EDE6]'}`}>
                   <Counter target={stat.target} suffix={stat.suffix} decimals={stat.decimals} />
                 </span>
-                <span className="font-mono text-[10px] uppercase tracking-widest opacity-50">{stat.label}</span>
+                <span className="font-mono text-[10px] uppercase tracking-widest opacity-50">
+                  {stat.label === 'Shoots' ? t('stats.shoots') :
+                   stat.label === 'Countries' ? t('stats.countries') :
+                   stat.label === '48hr Delivery' ? t('stats.delivery') :
+                   stat.label === 'Rating' ? t('stats.rating') : stat.label}
+                </span>
               </motion.div>
             ))}
           </div>
@@ -500,7 +575,7 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="text-[11px] font-mono text-gold mb-12 tracking-[0.4em] uppercase"
             >
-              THE METHOD
+              {language === 'IT' ? 'IL METODO' : 'THE METHOD'}
             </motion.div>
             <div className="flex flex-col md:flex-row gap-10 md:gap-4 lg:gap-8 items-start">
               {[
@@ -579,8 +654,8 @@ export default function HomePage() {
                             transition={{ delay: 0.4 }}
                             className="pt-6 border-t border-gold/10"
                           >
-                            <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-gold/40">Key Deliverable</span>
-                            <p className="font-display italic text-xl mt-2">Bespoke Editorial Gallery</p>
+                            <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-gold/40">{t('process.subtitle')}</span>
+                            <p className="font-display italic text-xl mt-2">{t('process.deliverable')}</p>
                           </motion.div>
                         </motion.div>
                       )}
@@ -627,9 +702,9 @@ export default function HomePage() {
               onTouchEnd={() => setBeforeAfterProgress(1)}
             >
               <motion.img 
-                src="/src/assets/images/about_section_portrait_1779019597653.png" 
+                src={resolveAsset("/src/assets/images/about_section_portrait_1779019597653.png")} 
                 className="absolute inset-x-0 -inset-y-16 w-full h-[calc(100%+128px)] object-cover grayscale sepia brightness-50"
-                alt="Portrait Reveal Background"
+                alt={t('about.reveal.bg')}
                 referrerPolicy="no-referrer"
                 loading="lazy"
                 style={{ y: bgY }}
@@ -639,9 +714,9 @@ export default function HomePage() {
                 style={{ clipPath: `inset(0 ${100 - beforeAfterProgress * 100}% 0 0)` }}
               >
                 <motion.img 
-                  src="/src/assets/images/about_section_portrait_1779019597653.png"
+                  src={resolveAsset("/src/assets/images/about_section_portrait_1779019597653.png")}
                   className="absolute inset-x-0 -inset-y-16 w-full h-[calc(100%+128px)] object-cover"
-                  alt="Portrait Reveal Foreground"
+                  alt={t('about.reveal.fg')}
                   referrerPolicy="no-referrer"
                   loading="lazy"
                   style={{ y: fgY }}
@@ -656,24 +731,74 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="absolute bottom-6 left-6 z-10 font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 bg-base border border-gold text-gold">
-                HOLD TO REVEAL RAW
+                {language === 'IT' ? 'RIVELA FOTO GREZZA' : 'HOLD TO REVEAL RAW'}
               </div>
             </div>
 
             <div className="flex-1 text-center md:text-left text-white">
-              <span className="font-mono text-gold text-[10px] sm:text-[11px] uppercase tracking-[0.4em] mb-6 block">Our Ethos</span>
-              <h2 className="font-display text-4xl sm:text-6xl mb-8 sm:mb-10 uppercase leading-[1.1] tracking-tighter">The Romantic Subject.<br className="hidden sm:block" />The Mechanical Observer.</h2>
-              <p className="font-mono text-xs sm:text-[13px] text-white/50 leading-relaxed max-w-md mb-10 sm:mb-12 mx-auto md:mx-0">
-                We reject the standard. Every commission is a cinematic event, utilizing shadows to tell stories that light often hides. Our process is quiet, intentional, and rooted in the traditions of film noir.
+              <span className="font-mono text-gold text-[10px] sm:text-[11px] uppercase tracking-[0.4em] mb-6 block">{t('about.ethos')}</span>
+              <h2 className="font-display text-4xl sm:text-6xl mb-8 sm:mb-10 uppercase leading-[1.1] tracking-tighter">
+                {language === 'IT' ? <>Il Sottofondo Romantico.<br className="hidden sm:block" />L'Osservatore Meccanico.</> : <>The Romantic Subject.<br className="hidden sm:block" />The Mechanical Observer.</>}
+              </h2>
+              <p className="font-mono text-xs sm:text-[13px] text-white/50 leading-relaxed max-w-md mb-8 mx-auto md:mx-0">
+                {language === 'IT' 
+                  ? 'Respingiamo le convenzioni. Ogni commissione è un evento cinematografico, che sfrutta le ombre per narrare vicende che la luce tenta di celare. Il nostro approccio è silenzioso, intimo e radicato nella tradizione noir.' 
+                  : 'We reject the standard. Every commission is a cinematic event, utilizing shadows to tell stories that light often hides. Our process is quiet, intentional, and rooted in the traditions of film noir.'}
               </p>
+
+              {/* Expand Button */}
+              <div className="mb-10 flex justify-center md:justify-start">
+                <button
+                  id="about-expand-btn"
+                  onClick={() => setAboutExpanded(!aboutExpanded)}
+                  className="group flex items-center gap-3 px-6 py-3 border border-white/20 hover:border-gold bg-transparent text-white hover:text-gold transition-all duration-300 rounded-none font-mono text-[11px] uppercase tracking-[0.2em] cursor-pointer"
+                >
+                  <span>{aboutExpanded ? t('about.expand_btn.less') : t('about.expand_btn.more')}</span>
+                  <motion.span
+                    animate={{ rotate: aboutExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="inline-block"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5 text-gold" id="about-expand-icon" />
+                  </motion.span>
+                </button>
+              </div>
+
+              {/* Collapsible Storytelling Information Block */}
+              <AnimatePresence>
+                {aboutExpanded && (
+                  <motion.div
+                    id="about-expanded-content"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden mb-10 max-w-lg mx-auto md:mx-0 text-left border-l border-gold/40 pl-6 space-y-5"
+                  >
+                    <h3 className="font-display text-xl sm:text-2xl text-gold italic uppercase tracking-wider mb-2">
+                      {t('about.extended_bio.title')}
+                    </h3>
+                    <p className="font-mono text-xs text-white/70 leading-relaxed">
+                      {t('about.extended_bio.p1')}
+                    </p>
+                    <p className="font-mono text-xs text-white/70 leading-relaxed">
+                      {t('about.extended_bio.p2')}
+                    </p>
+                    <p className="font-mono text-xs text-white/70 leading-relaxed">
+                      {t('about.extended_bio.p3')}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="flex gap-10 sm:gap-16 pt-10 border-t border-[#2A2A2A] justify-center md:justify-start">
                 <div>
-                  <span className="block font-display text-2xl mb-2 italic text-gold">The Eye</span>
-                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.3em]">Visual Direction</span>
+                  <span className="block font-display text-2xl mb-2 italic text-gold">{t('about.eye.title')}</span>
+                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.3em]">{t('about.eye.subtitle')}</span>
                 </div>
                 <div>
-                  <span className="block font-display text-2xl mb-2 italic text-gold">The Lab</span>
-                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.3em]">Cinematic Grading</span>
+                  <span className="block font-display text-2xl mb-2 italic text-gold">{t('about.lab.title')}</span>
+                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.3em]">{t('about.lab.subtitle')}</span>
                 </div>
               </div>
             </div>
@@ -691,11 +816,23 @@ export default function HomePage() {
                 transition={{ duration: 0.9, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="flex flex-col gap-8 text-white"
               >
-                <p className="font-display text-2xl italic leading-relaxed text-paper/90">"{t.text}"</p>
+                <p className="font-display text-2xl italic leading-relaxed text-paper/90">
+                  "{language === 'IT' ? (
+                    t.author === 'Elena Rossi' ? 'Ogni fotogramma catturato da Nep sembra un ricordo che non sapevo di avere. Pura magia cinematografica.' :
+                    t.author === 'Marc Jacobs' ? "L'occhio per i dettagli e il modo in cui viene utilizzata la luce sono a dir poco maestria artistica." :
+                    t.author === 'Sarah Jenkins' ? "Non scattano solo foto; creano un'atmosfera che ti rimane impressa per sempre." : t.text
+                  ) : t.text}"
+                </p>
                 <div className="mt-auto">
                   <div className="h-px w-8 bg-gold mb-4" />
                   <span className="block font-mono text-[11px] uppercase tracking-widest">{t.author}</span>
-                  <span className="block font-mono text-[9px] text-white/30 uppercase tracking-[0.2em]">{t.type} Client</span>
+                  <span className="block font-mono text-[9px] text-white/30 uppercase tracking-[0.2em]">
+                    {language === 'IT' ? (
+                      t.type === 'Wedding' ? 'Cliente Matrimonio' :
+                      t.type === 'Editorial' ? 'Cliente Editoriale' :
+                      t.type === 'Commercial' ? 'Cliente Commerciale' : `${getGenreLabel(t.type)} Cliente`
+                    ) : `${t.type} Client`}
+                  </span>
                 </div>
               </motion.div>
             ))}
@@ -722,7 +859,7 @@ export default function HomePage() {
                 >
                   <img 
                     loading="lazy"
-                    src={src} 
+                    src={resolveAsset(src)} 
                     alt={`NEP Photography Studio Gallery Image ${i}`} 
                     className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
                   />
@@ -752,12 +889,12 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8"
           >
-            <MagneticButton primary className="w-full sm:w-auto text-base font-display normal-case italic !px-8 sm:!px-12 !py-4 sm:!py-6 text-lg sm:text-xl">
-              Book a Consultation
+            <MagneticButton primary className="w-full sm:w-auto text-base font-display normal-case italic !px-8 sm:!px-12 !py-4 sm:!py-6 text-lg sm:text-xl" onClick={() => handleScrollToSection(undefined, 'contact')}>
+              {language === 'IT' ? 'Prenota una Consulenza' : 'Book a Consultation'}
             </MagneticButton>
             <Link to="/work" className="w-full sm:w-auto">
               <MagneticButton className="w-full sm:w-auto text-[11px]">
-                View Full Work
+                {language === 'IT' ? 'Vedi Archivio Lavori' : 'View Full Work'}
               </MagneticButton>
             </Link>
           </motion.div>
@@ -772,18 +909,22 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8 }}
               >
-                <span className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-6 block">Inquiries</span>
-                <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none mb-10">Start the<br />Dialogue.</h2>
+                <span className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-6 block">{t('contact.inquiries')}</span>
+                <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none mb-10">
+                  {language === 'IT' ? <>Inizia il<br />Dialogo.</> : <>Start the<br />Dialogue.</>}
+                </h2>
                 <p className="font-mono text-xs sm:text-[13px] text-white/50 leading-relaxed max-w-sm mb-12">
-                  Our archive is curated for those who value the mechanical eye and the romantic subject. Send us your vision, and let's lock the frame.
+                  {language === 'IT' 
+                    ? "Il nostro archivio è curato per chi valorizza l'occhio meccanico e il soggetto romantico. Inviaci la tua visione e blocchiamo il fotogramma insieme." 
+                    : "Our archive is curated for those who value the mechanical eye and the romantic subject. Send us your vision, and let's lock the frame."}
                 </p>
                 <div className="flex flex-col gap-8 border-t border-[#2A2A2A] pt-12">
                   <div>
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Electronic Mail</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('contact.email')}</span>
                     <span className="font-display italic text-2xl hover:text-gold transition-colors cursor-pointer text-white">archive@nep.photo</span>
                   </div>
                   <div>
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Studio Location</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('contact.location')}</span>
                     <span className="font-display italic text-2xl text-white">Milano, IT • Via Tortona 35</span>
                   </div>
                 </div>
@@ -799,15 +940,17 @@ export default function HomePage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="h-full flex flex-col items-center justify-center text-center p-10 border border-gold/20 bg-gold/5"
                   >
-                    <span className="font-display text-4xl italic text-gold mb-6">Received.</span>
+                    <span className="font-display text-4xl italic text-gold mb-6">{t('contact.received')}</span>
                     <p className="font-mono text-xs text-white/50 tracking-widest max-w-[280px]">
-                      Your vision has been archived. Our curators will respond within the cycle.
+                      {language === 'IT' 
+                        ? 'La tua visione è stata archiviata. I nostri curatori risponderanno a breve.' 
+                        : 'Your vision has been archived. Our curators will respond within the cycle.'}
                     </p>
                     <button 
                       onClick={() => setFormStatus('idle')}
                       className="mt-10 font-mono text-[10px] uppercase tracking-[0.4em] text-gold hover:text-white transition-colors"
                     >
-                      New Message •
+                      {language === 'IT' ? 'Nuovo Messaggio •' : 'New Message •'}
                     </button>
                   </motion.div>
                 ) : (
@@ -825,20 +968,28 @@ export default function HomePage() {
                     className="flex flex-col gap-10"
                   >
                     <div className="relative group">
-                      <label htmlFor="full-identity" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">Full Identity</label>
-                      <input required id="full-identity" name="name" type="text" placeholder="ENTER YOUR NAME" className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 text-white" />
+                      <label htmlFor="full-identity" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">
+                        {language === 'IT' ? 'Identità Completa' : 'Full Identity'}
+                      </label>
+                      <input required id="full-identity" name="name" type="text" placeholder={language === 'IT' ? 'INSERISCI IL TUO NOME' : 'ENTER YOUR NAME'} className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 text-white" />
                     </div>
                     <div className="relative group">
-                      <label htmlFor="return-address" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">Return Address</label>
-                      <input required id="return-address" name="email" type="email" placeholder="EMAIL ADDRESS" className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 text-white" />
+                      <label htmlFor="return-address" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">
+                        {language === 'IT' ? 'Indirizzo di Risposta' : 'Return Address'}
+                      </label>
+                      <input required id="return-address" name="email" type="email" placeholder={language === 'IT' ? 'INDIRIZZO EMAIL' : 'EMAIL ADDRESS'} className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 text-white" />
                     </div>
                     <div className="relative group">
-                      <label htmlFor="proposition" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">The Proposition</label>
-                      <textarea required id="proposition" name="message" rows={4} placeholder="DESCRIBE YOUR VISION" className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 resize-none text-white" />
+                      <label htmlFor="proposition" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">
+                        {language === 'IT' ? 'La Proposta' : 'The Proposition'}
+                      </label>
+                      <textarea required id="proposition" name="message" rows={4} placeholder={language === 'IT' ? 'DESCRIVI LA TUA VISIONE' : 'DESCRIBE YOUR VISION'} className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 resize-none text-white" />
                     </div>
                     <div className="pt-6">
                       <MagneticButton primary className="!px-16 !py-6 text-sm font-bold w-full sm:w-auto disabled:opacity-50">
-                        {formStatus === 'sending' ? 'Transmitting...' : 'Transmit Message'}
+                        {formStatus === 'sending' 
+                          ? (language === 'IT' ? 'In Trasmissione...' : 'Transmitting...') 
+                          : (language === 'IT' ? 'Invia Messaggio' : 'Transmit Message')}
                       </MagneticButton>
                     </div>
                   </motion.form>
@@ -873,17 +1024,86 @@ export default function HomePage() {
               className="relative w-full max-w-6xl h-full max-h-[90vh] bg-[#111] border border-[#2A2A2A] flex flex-col md:flex-row overflow-hidden shadow-2xl"
             >
               <button className="absolute top-6 right-6 z-50 p-2 text-white/50 hover:text-gold transition-colors" onClick={() => setSelectedProject(null)}><X size={24} /></button>
-              <div className="w-full md:w-3/5 h-[40vh] md:h-auto overflow-hidden bg-black/20">
-                <motion.img 
-                  key={selectedProject.image}
-                  initial={{ scale: 1.2, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                  src={selectedProject.image} 
-                  alt={selectedProject.title} 
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
+              <div 
+                className="relative w-full md:w-3/5 h-[40vh] md:h-auto overflow-hidden bg-black/20 group/carousel select-none cursor-pointer"
+                onClick={() => {
+                  setLightboxIndex(currentImageIndex);
+                  setIsLightboxOpen(true);
+                }}
+                title={language === 'IT' ? "Clicca per la modalità a schermo intero ad alta risoluzione" : "Click for full-screen high-fidelity lightbox"}
+              >
+                <AnimatePresence>
+                  <motion.img 
+                    key={`${selectedProject.id}-${currentImageIndex}`}
+                    initial={{ scale: 1.05, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    src={resolveAsset(selectedProject.images && selectedProject.images.length > 0 ? selectedProject.images[currentImageIndex] : selectedProject.image)} 
+                    alt={`${selectedProject.title} - View ${currentImageIndex + 1}`} 
+                    referrerPolicy="no-referrer"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/carousel:scale-102"
+                  />
+                </AnimatePresence>
+
+                {/* Subtle View High-Fidelity overlay on hover */}
+                <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-10">
+                  <div className="border border-gold px-4 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-gold bg-base/95 shadow-xl">
+                    {language === 'IT' ? 'VEDI AD ALTA RISOLUZIONE ✦' : 'VIEW HIGH-FIDELITY ✦'}
+                  </div>
+                </div>
+
+                {/* Ambient dark gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none z-[5]" />
+
+                {(selectedProject.images && selectedProject.images.length > 1) && (
+                  <>
+                    {/* Navigation Arrows */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const len = selectedProject.images.length;
+                        setCurrentImageIndex((prev) => (prev - 1 + len) % len);
+                      }}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-gold hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
+                      title="Previous Image"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const len = selectedProject.images.length;
+                        setCurrentImageIndex((prev) => (prev + 1) % len);
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-gold hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
+                      title="Next Image"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+
+                    {/* Image Indicators */}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-black/45 px-3 py-1.5 rounded-full border border-white/5 backdrop-blur-md">
+                      {selectedProject.images.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex(i);
+                          }}
+                          className={`w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === currentImageIndex ? 'bg-orange w-3' : 'bg-white/40 hover:bg-white/80'}`}
+                          title={`Go to image ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Image counter pagination badge */}
+                    <div className="absolute top-6 left-6 z-20 font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/80 bg-black/45 px-3 py-1.5 rounded border border-white/5 backdrop-blur-md">
+                      {currentImageIndex + 1} / {selectedProject.images.length}
+                    </div>
+                  </>
+                )}
               </div>
               <div className="flex-1 p-8 md:p-16 flex flex-col justify-center overflow-y-auto max-h-[50vh] md:max-h-none text-white">
                 <div className="overflow-hidden">
@@ -908,6 +1128,14 @@ export default function HomePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Lightbox 
+        images={(selectedProject?.images || (selectedProject ? [selectedProject.image] : [])).map(resolveAsset)}
+        initialIndex={lightboxIndex}
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        title={selectedProject ? getProjectTitle(selectedProject.title) : undefined}
+      />
     </div>
   );
 }

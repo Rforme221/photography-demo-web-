@@ -2,8 +2,11 @@ import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { PORTFOLIO_ITEMS, GENRES } from '../constants';
+import { PORTFOLIO_ITEMS, GENRES, resolveAsset } from '../constants';
 import { MagneticButton } from '../components/MagneticButton';
+import { useLanguage } from '../context/LanguageContext';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { Lightbox } from '../components/Lightbox';
 
 interface FullWorkPortfolioItemProps {
   item: typeof PORTFOLIO_ITEMS[0];
@@ -16,7 +19,9 @@ const PortfolioItemCard: React.FC<FullWorkPortfolioItemProps> = ({
   idx, 
   setSelectedProject 
 }) => {
+  const { getProjectTitle, getGenreLabel } = useLanguage();
   const ref = useRef(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"]
@@ -39,23 +44,41 @@ const PortfolioItemCard: React.FC<FullWorkPortfolioItemProps> = ({
       className="group cursor-pointer"
       onClick={() => setSelectedProject(item)}
     >
-      <div className="relative aspect-[4/5] overflow-hidden border border-[#2A2A2A]">
-        <motion.img 
-          style={{ y, scale: 1.15 }}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          src={item.image} 
-          alt={item.title} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
-        />
-        <div className="absolute inset-0 bg-base/20 group-hover:bg-transparent transition-colors duration-500" />
+      <div className="relative aspect-[4/5] overflow-hidden border border-[#2A2A2A] bg-[#0C0C0C]">
+        {!isLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#070707] z-10">
+            <div className="w-12 h-12 border border-[#2A2A2A] flex items-center justify-center animate-pulse">
+              <div className="w-2.5 h-2.5 bg-gold/20 rounded-full" />
+            </div>
+          </div>
+        )}
+        <motion.div
+          initial={{ filter: 'blur(15px)', opacity: 0 }}
+          animate={{ 
+            filter: isLoaded ? 'blur(0px)' : 'blur(15px)',
+            opacity: isLoaded ? 1 : 0
+          }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full h-full"
+        >
+          <motion.img 
+            style={{ y, scale: 1.15 }}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            src={resolveAsset(item.image)} 
+            alt={getProjectTitle(item.title)} 
+            onLoad={() => setIsLoaded(true)}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
+          />
+        </motion.div>
+        <div className="absolute inset-0 bg-base/20 group-hover:bg-transparent transition-colors duration-500 pointer-events-none" />
       </div>
       <motion.div 
         style={{ opacity }}
         className="mt-4 flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40"
       >
-        <span>{item.type}</span>
-        <span className="text-[#F2EDE6]/60 group-hover:text-gold transition-colors">{item.title}</span>
+        <span>{getGenreLabel(item.type)}</span>
+        <span className="text-[#F2EDE6]/60 group-hover:text-gold transition-colors">{getProjectTitle(item.title)}</span>
       </motion.div>
     </motion.div>
   );
@@ -115,14 +138,21 @@ const PROMPT_SUGGESTIONS_BY_GENRE: Record<string, string[]> = {
     'Foggy pine trees peak outline reflected in a glass-like alpine mountain lake',
     'Spotted sun rays piercing through heavy tree leaves in misty forest canopy',
     'A pristine minimalist cold mountain range outline against a soft peach sky'
+  ],
+  EVENTS: [
+    'Cinematic art exhibition hall with soft focus visitors holding programs',
+    'Chic champagne reception, selective focus on crystal glassware under hanging lights',
+    'Backstage gala preparation, vintage mirrors and soft warm makeup lights'
   ]
 };
 
 export default function FullWorkPage() {
-  const [activeFilter, setActiveFilter] = useState('WEDDINGS');
+  const { t, language, getProjectTitle, getGenreLabel } = useLanguage();
+  const [activeFilter, setActiveFilter] = useState('WILDLIFE');
   const [portfolioItems, setPortfolioItems] = useState(() => PORTFOLIO_ITEMS);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // AI Image generation states
   const [prompt, setPrompt] = useState('');
@@ -294,9 +324,12 @@ export default function FullWorkPage() {
       <div className="noise-overlay" />
       
       <div className="max-w-7xl mx-auto">
-        <Link to="/" className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-gold hover:text-white transition-colors mb-12">
-          <ChevronLeft size={14} /> Back to Narrative
-        </Link>
+        <div className="flex items-center justify-between xl:items-start mb-12">
+          <Link to="/" className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-gold hover:text-white transition-colors">
+            <ChevronLeft size={14} /> {language === 'IT' ? 'Torna alla Galleria' : 'Back to Narrative'}
+          </Link>
+          <LanguageSwitcher />
+        </div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -304,8 +337,10 @@ export default function FullWorkPage() {
           className="flex flex-col lg:flex-row items-end justify-between mb-16 gap-8"
         >
           <div>
-            <span className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-4 block">Archive</span>
-            <h1 className="font-display text-5xl sm:text-8xl uppercase leading-none opacity-90">Selected<br />Works.</h1>
+            <span className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-4 block">{language === 'IT' ? 'Archivo' : 'Archive'}</span>
+            <h1 className="font-display text-5xl sm:text-8xl uppercase leading-none opacity-90">
+              {language === 'IT' ? <>Opere<br />Selezionate.</> : <>Selected<br />Works.</>}
+            </h1>
           </div>
           
           <div className="flex flex-wrap gap-2 sm:gap-4 font-mono text-[10px] tracking-widest">
@@ -315,7 +350,7 @@ export default function FullWorkPage() {
                 onClick={() => setActiveFilter(filter)}
                 className={`px-3 sm:px-4 py-2 border transition-all ${activeFilter === filter ? 'border-gold text-gold' : 'border-[#2A2A2A] text-white/40 hover:border-white/30'}`}
               >
-                {filter}
+                {getGenreLabel(filter)}
               </button>
             ))}
           </div>
@@ -357,23 +392,34 @@ export default function FullWorkPage() {
                 <X size={24} />
               </button>
 
-              <div className="relative w-full md:w-3/5 h-[40vh] md:h-full overflow-hidden bg-black/20 group/carousel select-none">
-                <AnimatePresence mode="wait">
+              <div 
+                className="relative w-full md:w-3/5 h-[40vh] md:h-full overflow-hidden bg-black/20 group/carousel select-none cursor-pointer"
+                onClick={() => setIsLightboxOpen(true)}
+                title={language === 'IT' ? "Clicca per la modalità a schermo intero ad alta risoluzione" : "Click for full-screen high-fidelity lightbox"}
+              >
+                <AnimatePresence>
                   <motion.img 
                     key={`${selectedProject.id}-${currentImageIndex}`}
                     initial={{ scale: 1.05, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.95, opacity: 0 }}
                     transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                    src={selectedProject.images && selectedProject.images.length > 0 ? selectedProject.images[currentImageIndex] : selectedProject.image} 
+                    src={resolveAsset(selectedProject.images && selectedProject.images.length > 0 ? selectedProject.images[currentImageIndex] : selectedProject.image)} 
                     alt={`${selectedProject.title} - View ${currentImageIndex + 1}`} 
                     referrerPolicy="no-referrer"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/carousel:scale-102"
                   />
                 </AnimatePresence>
 
+                {/* Subtle View High-Fidelity overlay on hover */}
+                <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-10">
+                  <div className="border border-gold px-4 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-gold bg-base/95 shadow-xl">
+                    {language === 'IT' ? 'VEDI AD ALTA RISOLUZIONE ✦' : 'VIEW HIGH-FIDELITY ✦'}
+                  </div>
+                </div>
+
                 {/* Ambient dark gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none z-[5]" />
 
                 {(selectedProject.images && selectedProject.images.length > 1) && (
                   <>
@@ -433,7 +479,7 @@ export default function FullWorkPage() {
                     transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                     className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-4 block"
                   >
-                    Archive / {selectedProject.type}
+                    {language === 'IT' ? 'Archivio' : 'Archive'} / {getGenreLabel(selectedProject.type)}
                   </motion.span>
                 </div>
                 
@@ -445,7 +491,7 @@ export default function FullWorkPage() {
                     transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                     className="font-display text-5xl md:text-7xl uppercase leading-none tracking-tighter"
                   >
-                    {selectedProject.title}
+                    {getProjectTitle(selectedProject.title)}
                   </motion.h2>
                 </div>
 
@@ -462,7 +508,9 @@ export default function FullWorkPage() {
                   transition={{ delay: 0.7, duration: 0.8 }}
                   className="font-mono text-[13px] text-white/60 leading-relaxed mb-10 max-w-sm"
                 >
-                  A cinematic exploration into {selectedProject.title.toLowerCase()}. This project focuses on the interplay of natural highlights and the deep textures of the human condition.
+                  {language === 'IT' 
+                    ? `Un'esplorazione cinematografica in ${getProjectTitle(selectedProject.title).toLowerCase()}. Questo progetto si concentra sull'interazione delle luci naturali e le profonde tessiture della condizione umana.`
+                    : `A cinematic exploration into ${selectedProject.title.toLowerCase()}. This project focuses on the interplay of natural highlights and the deep textures of the human condition.`}
                 </motion.p>
                 
                 <div className="grid grid-cols-2 gap-8 border-t border-[#2A2A2A] pt-10">
@@ -471,23 +519,23 @@ export default function FullWorkPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8, duration: 0.6 }}
                   >
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Location</span>
-                    <span className="font-display italic text-xl">International Archive</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('project.location')}</span>
+                    <span className="font-display italic text-xl">{t('project.location.val')}</span>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.9, duration: 0.6 }}
                   >
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Format</span>
-                    <span className="font-display italic text-xl">35mm Digital</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('project.format')}</span>
+                    <span className="font-display italic text-xl">{t('project.format.val')}</span>
                   </motion.div>
                 </div>
                 
                 {/* AI Image Generation Suite */}
                 <div className="mt-8 pt-8 border-t border-[#2A2A2A]">
                   <h3 className="font-mono text-gold text-[10px] uppercase tracking-[0.35em] mb-4 flex items-center gap-1.5">
-                    <span className="animate-pulse">✦</span> AI Imagine Studio
+                    <span className="animate-pulse">✦</span> {t('ai.studio.title')}
                   </h3>
                   
                   {newImageNotification && (
@@ -506,7 +554,7 @@ export default function FullWorkPage() {
                       {selectedProject && PROMPT_SUGGESTIONS_BY_GENRE[selectedProject.type] && (
                         <div>
                           <span className="block font-mono text-[9px] uppercase tracking-[0.2em] text-gold mb-2 flex items-center gap-1">
-                            <span>✦</span> Dynamic Recommendations ({selectedProject.type})
+                            <span>✦</span> {t('ai.studio.recommendations')} ({getGenreLabel(selectedProject.type)})
                           </span>
                           <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
                             {PROMPT_SUGGESTIONS_BY_GENRE[selectedProject.type].map((suggestedPrompt, i) => (
@@ -530,11 +578,11 @@ export default function FullWorkPage() {
                       )}
 
                       <div>
-                        <label className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2">Prompt Description</label>
+                        <label className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2">{t('ai.studio.input_label')}</label>
                         <textarea
                           value={prompt}
                           onChange={(e) => setPrompt(e.target.value)}
-                          placeholder="Describe your subject scene or click a recommendation above..."
+                          placeholder={t('ai.studio.placeholder')}
                           className="w-full bg-[#161616] border border-[#2A2A2A] rounded p-3 font-mono text-[10px] text-white focus:outline-none focus:border-gold placeholder:text-white/20 transition-colors uppercase resize-none h-16"
                         />
                       </div>
@@ -542,13 +590,13 @@ export default function FullWorkPage() {
                       {/* Structured Assistant: Moods & Compositions */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2">Aesthetic Mood</label>
+                          <label className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2">{t('ai.studio.mood')}</label>
                           <select
                             value={selectedMood}
                             onChange={(e) => setSelectedMood(e.target.value)}
                             className="w-full bg-[#161616] border border-[#2A2A2A] rounded px-2.5 py-1.5 font-mono text-[9px] text-[#F2EDE6] focus:outline-none focus:border-gold transition-colors uppercase cursor-pointer"
                           >
-                            <option value="">Default (Neutral Preset)</option>
+                            <option value="">{t('ai.studio.mood.default')}</option>
                             {MOOD_PRESETS.map((m) => (
                               <option key={m.name} value={m.phrase}>
                                 {m.name}
@@ -558,13 +606,13 @@ export default function FullWorkPage() {
                         </div>
 
                         <div>
-                          <label className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2 font-medium">Composition</label>
+                          <label className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2 font-medium">{t('ai.studio.composition')}</label>
                           <select
                             value={selectedComposition}
                             onChange={(e) => setSelectedComposition(e.target.value)}
                             className="w-full bg-[#161616] border border-[#2A2A2A] rounded px-2.5 py-1.5 font-mono text-[9px] text-[#F2EDE6] focus:outline-none focus:border-gold transition-colors uppercase cursor-pointer"
                           >
-                            <option value="">Default (Neutral Preset)</option>
+                            <option value="">{t('ai.studio.composition.default')}</option>
                             {COMPOSITION_PRESETS.map((c) => (
                               <option key={c.name} value={c.phrase}>
                                 {c.name}
@@ -575,7 +623,7 @@ export default function FullWorkPage() {
                       </div>
 
                       <div>
-                        <span className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2">Visual Rendering Preset</span>
+                        <span className="block font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40 mb-2">{t('ai.studio.preset')}</span>
                         <div className="grid grid-cols-2 gap-2">
                           {STYLE_PRESETS.map((style) => (
                             <button
@@ -597,8 +645,8 @@ export default function FullWorkPage() {
                       {/* Live Combined Formula Preview */}
                       {(prompt.trim() || selectedMood || selectedComposition) && (
                         <div className="bg-[#0e0e0e]/60 border border-[#2A2A2A] rounded p-2.5 font-mono text-[8.5px] text-[#F2EDE6]/50 uppercase tracking-widest leading-relaxed">
-                          <span className="text-gold font-bold">Formula Preview:</span>{' '}
-                          <span>{prompt.trim() || '[Empty subject description]'}</span>
+                          <span className="text-gold font-bold">{t('ai.studio.formula')}</span>{' '}
+                          <span>{prompt.trim() || t('ai.studio.empty_subject')}</span>
                           {selectedComposition && (
                             <span className="text-white">
                               , {COMPOSITION_PRESETS.find((c) => c.phrase === selectedComposition)?.name}
@@ -618,7 +666,7 @@ export default function FullWorkPage() {
                         disabled={!prompt.trim()}
                         className="w-full text-center font-mono text-[9px] leading-none uppercase tracking-widest border border-gold hover:bg-gold hover:text-black transition-all duration-300 py-3 rounded text-gold bg-transparent font-medium disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gold cursor-pointer flex items-center justify-center gap-2 animate-[fadeIn_0.5s_ease-out]"
                       >
-                        Capture & Add Frame
+                        {t('ai.studio.btn_generate')}
                       </button>
                     </div>
                   ) : (
@@ -634,7 +682,7 @@ export default function FullWorkPage() {
                         />
                       </div>
                       <p className="font-mono text-[8px] uppercase tracking-widest text-[#F2EDE6]/30 text-center">
-                        Sensing depth parameters · Simulating camera lens
+                        {language === 'IT' ? 'Rilevamento parametri profondità • Simulazione lente fotocamera' : 'Sensing depth parameters • Simulating camera lens'}
                       </p>
                     </div>
                   )}
@@ -645,10 +693,10 @@ export default function FullWorkPage() {
                   <div className="mt-12 pt-8 border-t border-[#2A2A2A] animate-[fadeIn_0.6s_ease-out]">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-mono text-gold text-[10px] uppercase tracking-[0.35em] flex items-center gap-1.5">
-                        <span>✦</span> Related Narratives
+                        <span>✦</span> {language === 'IT' ? 'Storie Correlate' : 'Related Narratives'}
                       </h4>
                       <span className="font-mono text-[8px] text-[#F2EDE6]/30 uppercase tracking-widest leading-none">
-                        Category: {selectedProject.type}
+                        {language === 'IT' ? 'Categoria' : 'Category'}: {getGenreLabel(selectedProject.type)}
                       </span>
                     </div>
 
@@ -660,14 +708,14 @@ export default function FullWorkPage() {
                             setSelectedProjectId(item.id);
                           }}
                           className="group text-left focus:outline-none cursor-pointer w-full"
-                          title={`Navigate to ${item.title}`}
+                          title={`Navigate to ${getProjectTitle(item.title)}`}
                         >
                           <div className="relative aspect-square overflow-hidden border border-[#2A2A2A] group-hover:border-gold/50 transition-colors duration-500 bg-[#0d0d0d]">
                             <img 
                               loading="lazy"
                               referrerPolicy="no-referrer"
-                              src={item.image} 
-                              alt={item.title} 
+                              src={resolveAsset(item.image)} 
+                              alt={getProjectTitle(item.title)} 
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                             <div className="absolute inset-0 bg-base/40 group-hover:bg-transparent transition-colors duration-500" />
@@ -675,16 +723,16 @@ export default function FullWorkPage() {
                             {/* Subtle view indicator overlay on hover */}
                             <div className="absolute inset-x-0 bottom-0 bg-black/80 py-1 px-1.5 border-t border-[#2A2A2A] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                               <p className="font-mono text-[7.5px] text-gold uppercase tracking-[0.2em] text-center">
-                                VIEW ARCHIVE
+                                {language === 'IT' ? 'VEDI SCHEDA' : 'VIEW ARCHIVE'}
                               </p>
                             </div>
                           </div>
                           <div className="mt-2.5">
                             <p className="font-mono text-[8.5px] text-white/50 group-hover:text-gold transition-colors uppercase tracking-widest truncate leading-tight">
-                              {item.title}
+                              {getProjectTitle(item.title)}
                             </p>
                             <p className="font-mono text-[7px] text-white/20 uppercase tracking-widest mt-0.5">
-                              {item.type}
+                              {getGenreLabel(item.type)}
                             </p>
                           </div>
                         </button>
@@ -699,7 +747,7 @@ export default function FullWorkPage() {
                   </MagneticButton>
                   
                   <MagneticButton primary className="!px-10 !py-4 text-xs font-bold" onClick={() => setSelectedProject(null)}>
-                    Back to Archive
+                    {language === 'IT' ? 'Chiudi Dettagli' : 'Back to Archive'}
                   </MagneticButton>
 
                   <MagneticButton onClick={handleNextProject} className="!p-4 flex items-center justify-center">
@@ -711,6 +759,14 @@ export default function FullWorkPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Lightbox 
+        images={(selectedProject?.images || (selectedProject ? [selectedProject.image] : [])).map(resolveAsset)}
+        initialIndex={currentImageIndex}
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        title={selectedProject ? getProjectTitle(selectedProject.title) : undefined}
+      />
     </div>
   );
 }
