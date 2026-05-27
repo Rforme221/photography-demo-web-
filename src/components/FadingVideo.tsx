@@ -14,7 +14,7 @@ export const FadingVideo = ({ src, fallbackImage, opacity }: { src?: string, fal
         <img 
           src={fallbackImage} 
           alt="NEP Photography Studio Atmospheric Background" 
-          className="w-full h-full object-cover"
+          className="hero-media w-full h-full object-cover"
           referrerPolicy="no-referrer"
           loading="lazy"
         />
@@ -33,7 +33,7 @@ export const FadingVideo = ({ src, fallbackImage, opacity }: { src?: string, fal
         loop
         playsInline
         title="NEP Photography Studio Cinematic Loop"
-        className="w-full h-full object-cover opacity-40"
+        className="hero-media w-full h-full min-h-full min-w-full object-cover object-center opacity-40 select-none pointer-events-none"
       >
         <source src={src} type="video/mp4" />
       </video>

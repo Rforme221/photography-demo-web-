@@ -58,8 +58,428 @@
     </script>
   </head>
   <body>
+    <div id="spb"></div>
     <div id="root"></div>
+
+    <!-- ───────────────────────────────────────────────────────────────────
+         01 · CUSTOM CURSOR HTML
+         ─────────────────────────────────────────────────────────────────── -->
+    <div id="c-dot"></div>
+    <div id="c-ring">
+      <svg viewBox="0 0 100 100">
+        <defs>
+          <path id="c-path"
+            d="M 50,50 m -30,0 a 30,30 0 1,1 60,0 a 30,30 0 1,1 -60,0"/>
+        </defs>
+        <text font-size="11" fill="#8B2FC9"
+              font-family="'DM Mono',monospace"
+              letter-spacing="4">
+          <textPath href="#c-path">VIEW · VIEW · VIEW ·</textPath>
+        </text>
+      </svg>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────────────────────
+         03 · LIGHTBOX HTML
+         ─────────────────────────────────────────────────────────────────── -->
+    <div id="lb" role="dialog" aria-modal="true" aria-label="Image viewer">
+      <button id="lb-close" aria-label="Close">✕</button>
+      <button id="lb-prev" aria-label="Previous">&#8592;</button>
+      <button id="lb-next" aria-label="Next">&#8594;</button>
+      <div id="lb-stage">
+        <img id="lb-img" src="" alt="">
+      </div>
+      <div id="lb-meta">
+        <span id="lb-cat"></span>
+        <span id="lb-title"></span>
+        <span id="lb-year"></span>
+      </div>
+      <div id="lb-film">
+        <div id="lb-film-track"></div>
+      </div>
+      <div id="lb-count"></div>
+    </div>
+
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- ───────────────────────────────────────────────────────────────────
+         INTERACTIVE SHORELINE SYSTEM SCRIPT
+         ─────────────────────────────────────────────────────────────────── -->
+    <script>
+      (function() {
+        // --- 01 · CUSTOM CURSOR ---
+        const dot  = document.getElementById('c-dot');
+        const ring = document.getElementById('c-ring');
+        if (dot && ring) {
+          let mx = 0, my = 0, rx = 0, ry = 0;
+
+          document.addEventListener('mousemove', e => {
+            mx = e.clientX; 
+            my = e.clientY;
+            dot.style.left = mx + 'px';
+            dot.style.top  = my + 'px';
+          });
+
+          /* Ring follows with lag */
+          (function loop(){
+            rx += (mx - rx) * 0.12;
+            ry += (my - ry) * 0.12;
+            ring.style.left = rx + 'px';
+            ring.style.top  = ry + 'px';
+            requestAnimationFrame(loop);
+          })();
+
+          /* State toggles via Delegation to survive React Re-renders */
+          document.addEventListener('mouseover', e => {
+            const overImgVal = e.target.closest('img, .portfolio-item, .p-item');
+            if (overImgVal) {
+              document.body.classList.add('cur-img');
+            } else {
+              document.body.classList.remove('cur-img');
+            }
+
+            const overCtaVal = e.target.closest('a, button, .cta-btn, .magnetic-area');
+            if (overCtaVal) {
+              document.body.classList.add('cur-cta');
+            } else {
+              document.body.classList.remove('cur-cta');
+            }
+          }, { passive: true });
+        }
+
+        // --- 02 · IMAGE HOVER CHOREOGRAPHY (Delegation) ---
+        document.addEventListener('mouseover', e => {
+          const item = e.target.closest('.p-item');
+          if (item) {
+            const grid = item.closest('.p-grid');
+            if (grid) {
+              grid.classList.add('has-hover');
+            }
+            item.classList.add('is-hovered');
+          }
+        }, { passive: true });
+
+        document.addEventListener('mouseout', e => {
+          const item = e.target.closest('.p-item');
+          if (item) {
+            const related = e.relatedTarget;
+            if (!related || !item.contains(related)) {
+              item.classList.remove('is-hovered');
+              const grid = item.closest('.p-grid');
+              if (grid) {
+                const stillHovered = document.querySelector('.p-item:hover');
+                if (!stillHovered) {
+                  grid.classList.remove('has-hover');
+                }
+              }
+            }
+          }
+        }, { passive: true });
+
+        // --- 03 · LIGHTBOX ENGINE ---
+        const lb      = document.getElementById('lb');
+        const lbImg   = document.getElementById('lb-img');
+        const lbCat   = document.getElementById('lb-cat');
+        const lbTitle = document.getElementById('lb-title');
+        const lbYear  = document.getElementById('lb-year');
+        const lbCount = document.getElementById('lb-count');
+        const lbTrack = document.getElementById('lb-film-track');
+        let items     = [];
+        let cur       = 0;
+
+        function buildFilm() {
+          if (!lbTrack) return;
+          lbTrack.innerHTML = '';
+          items.forEach((item, i) => {
+            const img = item.querySelector('img');
+            if (img) {
+              const t = document.createElement('img');
+              t.src = img.src; 
+              t.className = 'lb-thumb';
+              t.addEventListener('click', () => go(i));
+              lbTrack.appendChild(t);
+            }
+          });
+        }
+
+        function updateFilm() {
+          if (!lbTrack) return;
+          const thumbs = lbTrack.querySelectorAll('.lb-thumb');
+          thumbs.forEach((t, i) => {
+            t.classList.toggle('active', i === cur);
+          });
+          const active = lbTrack.children[cur];
+          if (active) {
+            active.scrollIntoView({ inline: 'center', behavior: 'smooth' });
+          }
+        }
+
+        function show(i) {
+          if (!lbImg || !lbCat || !lbTitle || !lbYear || !lbCount || items.length === 0) return;
+          cur = (i + items.length) % items.length;
+          const item = items[cur];
+          const img  = item.querySelector('img');
+          if (!img) return;
+          
+          lbImg.classList.add('changing');
+          setTimeout(() => {
+            lbImg.src   = img.src;
+            lbImg.alt   = img.alt || '';
+            lbCat.textContent   = item.getAttribute('data-cat')   || '';
+            lbTitle.textContent = item.getAttribute('data-title') || '';
+            lbYear.textContent  = item.getAttribute('data-year')  || '';
+            lbCount.textContent = (cur + 1) + ' / ' + items.length;
+            lbImg.classList.remove('changing');
+            updateFilm();
+          }, 200);
+        }
+
+        function go(i) { show(i); }
+        
+        function open(i) {
+          if (!lb) return;
+          items = Array.from(document.querySelectorAll('.p-item'));
+          buildFilm();
+          show(i);
+          lb.classList.add('open');
+          document.body.style.overflow = 'hidden';
+        }
+
+        function close() {
+          if (!lb) return;
+          lb.classList.remove('open');
+          document.body.style.overflow = '';
+        }
+
+        /* Delegation for Click to Open Lightbox */
+        document.addEventListener('click', e => {
+          const item = e.target.closest('.p-item');
+          if (item) {
+            e.preventDefault();
+            const currentItems = Array.from(document.querySelectorAll('.p-item'));
+            const i = currentItems.indexOf(item);
+            if (i !== -1) {
+              open(i);
+            }
+          }
+        });
+
+        /* Close, Prev, Next buttons */
+        const closeBtn = document.getElementById('lb-close');
+        const prevBtn  = document.getElementById('lb-prev');
+        const nextBtn  = document.getElementById('lb-next');
+
+        if (closeBtn) closeBtn.addEventListener('click', close);
+        if (prevBtn)  prevBtn.addEventListener('click', () => go(cur - 1));
+        if (nextBtn)  nextBtn.addEventListener('click', () => go(cur + 1));
+
+        /* Keybindings for Lightbox navigation */
+        document.addEventListener('keydown', e => {
+          if (!lb || !lb.classList.contains('open')) return;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(cur + 1);
+          if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    go(cur - 1);
+          if (e.key === 'Escape') close();
+        });
+
+        /* Click backdrop to close */
+        if (lb) {
+          lb.addEventListener('click', e => {
+            if (e.target === lb) close();
+          });
+        }
+
+        /* Swipe pointer-event handling */
+        if (lbImg) {
+          let px = 0, py = 0, dragging = false;
+          lbImg.addEventListener('pointerdown', e => {
+            px = e.clientX; 
+            py = e.clientY; 
+            dragging = true;
+            lbImg.setPointerCapture(e.pointerId);
+          });
+          lbImg.addEventListener('pointerup', e => {
+            if (!dragging) return; 
+            dragging = false;
+            const dx = e.clientX - px;
+            const dy = e.clientY - py;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+              if (dx < 0) {
+                go(cur + 1);
+              } else {
+                go(cur - 1);
+              }
+            }
+          });
+
+          /* Pinch-to-zoom */
+          let initDist = 0, curScale = 1;
+          lbImg.addEventListener('touchstart', e => {
+            if (e.touches.length === 2) {
+              initDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+              );
+            }
+          }, { passive: true });
+          
+          lbImg.addEventListener('touchmove', e => {
+            if (e.touches.length === 2) {
+              const d = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+              );
+              curScale = Math.min(Math.max(d / initDist, 1), 3);
+              lbImg.style.transform = `scale(${curScale})`;
+            }
+          }, { passive: true });
+          
+          lbImg.addEventListener('touchend', e => {
+            if (e.touches.length < 2) {
+              if (curScale < 1.15) {
+                curScale = 1; 
+                lbImg.style.transform = 'scale(1)';
+              }
+            }
+          });
+        }
+
+        // --- 04 · MAGNETIC CTA BUTTONS ---
+        document.addEventListener('mousemove', e => {
+          const btn = e.target.closest('.cta-btn, [data-magnetic]');
+          if (btn) {
+            const r = btn.getBoundingClientRect();
+            const x = (e.clientX - r.left - r.width  / 2) * 0.3;
+            const y = (e.clientY - r.top  - r.height / 2) * 0.3;
+            btn.style.transform = `translate(${x}px,${y}px)`;
+          }
+        }, { passive: true });
+
+        document.addEventListener('mouseout', e => {
+          const btn = e.target.closest('.cta-btn, [data-magnetic]');
+          if (btn) {
+            const related = e.relatedTarget;
+            if (!related || !btn.contains(related)) {
+              btn.style.transform = 'translate(0, 0)';
+            }
+          }
+        }, { passive: true });
+
+      })();
+    </script>
+
+    <!-- ───────────────────────────────────────────────────────────────────
+         NEP PHOTOGRAPHY ANIMATIONS LAYER
+         ─────────────────────────────────────────────────────────────────── -->
+    <script>
+      (function() {
+        // --- 01 · SCROLL PROGRESS BAR ---
+        window.addEventListener('scroll', () => {
+          const spb = document.getElementById('spb');
+          if (spb) {
+            const p = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+            spb.style.transform = `scaleX(${p})`;
+          }
+        }, { passive: true });
+
+        // --- 02A · PARALLAX HERO ---
+        window.addEventListener('scroll', () => {
+          const hero = document.querySelector('.hero-media');
+          if (!hero) return;
+          const y = window.scrollY;
+          hero.style.transform = `translateY(${y * 0.4}px)`;
+        }, { passive: true });
+
+        // --- DYNAMIC SETUP & OBSERVERS FOR REACT ---
+        const setupAnimations = () => {
+          // 02B · HEADLINE SPLIT
+          document.querySelectorAll('.split-head:not(.split_done)').forEach(h => {
+            h.classList.add('split_done');
+            if (!h.querySelector('.w')) {
+              h.innerHTML = h.innerText.split(' ')
+                .map(w => `<span class="w">${w}</span>`)
+                .join(' ');
+            }
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                h.classList.add('revealed');
+              });
+            });
+          });
+
+          // 03 · EXPLICIT SECTION REVEALS (Intersection Observer)
+          const revealIo = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+              if (e.isIntersecting) {
+                e.target.classList.add('in');
+                revealIo.unobserve(e.target);
+              }
+            });
+          }, { threshold: 0.12 });
+
+          document.querySelectorAll('.reveal:not(.observing)').forEach(el => {
+            el.classList.add('observing');
+            revealIo.observe(el);
+          });
+
+          // 03B · STATS COUNT-UP (Intersection Observer)
+          const countUp = (el) => {
+            const target = +el.dataset.val;
+            if (isNaN(target)) return;
+            const dur = 800;
+            const start = performance.now();
+            (function tick(now) {
+              const p = Math.min((now - start) / dur, 1);
+              const ease = 1 - Math.pow(1 - p, 3);
+              el.textContent = Math.floor(ease * target);
+              if (p < 1) requestAnimationFrame(tick);
+              else el.textContent = target;
+            })(start);
+          };
+
+          const statIo = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+              if (e.isIntersecting) {
+                e.target.querySelectorAll('[data-val]:not(.counted)').forEach(numEl => {
+                  numEl.classList.add('counted');
+                  countUp(numEl);
+                });
+                statIo.unobserve(e.target);
+              }
+            });
+          }, { threshold: 0.3 });
+
+          document.querySelectorAll('.stat-block:not(.observing_stats)').forEach(el => {
+            el.classList.add('observing_stats');
+            statIo.observe(el);
+          });
+        };
+
+        // Initialize and setup observer for dynamic React re-renders/navigation
+        window.addEventListener('DOMContentLoaded', setupAnimations);
+        setupAnimations();
+        setTimeout(setupAnimations, 300);
+        setTimeout(setupAnimations, 1000);
+
+        const observer = new MutationObserver(() => {
+          setupAnimations();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // --- 04 · PAGE TRANSITIONS ---
+        if (document.startViewTransition) {
+          document.addEventListener('click', e => {
+            const a = e.target.closest('a');
+            if (!a) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto')) return;
+            e.preventDefault();
+            document.startViewTransition(() => {
+              window.location.href = href;
+            });
+          });
+        }
+      })();
+    </script>
   </body>
 </html>
 

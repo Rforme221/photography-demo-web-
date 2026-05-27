@@ -41,14 +41,14 @@ const PortfolioItemCard: React.FC<FullWorkPortfolioItemProps> = ({
         duration: 0.6, 
         ease: [0.16, 1, 0.3, 1] 
       }}
-      className="group cursor-pointer"
+      className="reveal p-tile group cursor-pointer"
       onClick={() => setSelectedProject(item)}
     >
-      <div className="relative aspect-[4/5] overflow-hidden border border-[#2A2A2A] bg-[#0C0C0C]">
+      <div className="relative aspect-[4/5] overflow-hidden border border-border-subtle bg-bg-surface">
         {!isLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#070707] z-10">
-            <div className="w-12 h-12 border border-[#2A2A2A] flex items-center justify-center animate-pulse">
-              <div className="w-2.5 h-2.5 bg-gold/20 rounded-full" />
+          <div className="absolute inset-0 flex items-center justify-center bg-bg-base z-10">
+            <div className="w-12 h-12 border border-border-subtle flex items-center justify-center animate-pulse">
+              <div className="w-2.5 h-2.5 bg-accent-purple/20 rounded-full" />
             </div>
           </div>
         )}
@@ -78,7 +78,7 @@ const PortfolioItemCard: React.FC<FullWorkPortfolioItemProps> = ({
         className="mt-4 flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40"
       >
         <span>{getGenreLabel(item.type)}</span>
-        <span className="text-[#F2EDE6]/60 group-hover:text-gold transition-colors">{getProjectTitle(item.title)}</span>
+        <span className="text-[#F2EDE6]/60 group-hover:text-accent-orange transition-colors duration-300">{getProjectTitle(item.title)}</span>
       </motion.div>
     </motion.div>
   );
@@ -320,12 +320,12 @@ export default function FullWorkPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base pt-32 px-6 md:px-10 pb-20">
+    <div className="min-h-screen bg-bg-base pt-32 px-6 md:px-10 pb-20">
       <div className="noise-overlay" />
       
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between xl:items-start mb-12">
-          <Link to="/" className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-gold hover:text-white transition-colors">
+          <Link to="/" className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-accent-orange hover:text-accent-purple transition-all duration-300">
             <ChevronLeft size={14} /> {language === 'IT' ? 'Torna alla Galleria' : 'Back to Narrative'}
           </Link>
           <LanguageSwitcher />
@@ -337,8 +337,8 @@ export default function FullWorkPage() {
           className="flex flex-col lg:flex-row items-end justify-between mb-16 gap-8"
         >
           <div>
-            <span className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-4 block">{language === 'IT' ? 'Archivo' : 'Archive'}</span>
-            <h1 className="font-display text-5xl sm:text-8xl uppercase leading-none opacity-90">
+            <span className="font-mono text-accent-orange text-[10px] uppercase tracking-[0.4em] mb-4 block">{language === 'IT' ? 'Archivo' : 'Archive'}</span>
+            <h1 className="split-head font-display text-5xl sm:text-8xl uppercase leading-none text-text-primary">
               {language === 'IT' ? <>Opere<br />Selezionate.</> : <>Selected<br />Works.</>}
             </h1>
           </div>
@@ -348,7 +348,7 @@ export default function FullWorkPage() {
               <button 
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`px-3 sm:px-4 py-2 border transition-all ${activeFilter === filter ? 'border-gold text-gold' : 'border-[#2A2A2A] text-white/40 hover:border-white/30'}`}
+                className={`px-3 sm:px-4 py-2 border transition-all rounded-none cursor-none ${activeFilter === filter ? 'border-accent-purple text-accent-purple bg-base/5' : 'border-border-subtle text-text-secondary opacity-55 hover:border-border-vibrant hover:opacity-90'}`}
               >
                 {getGenreLabel(filter)}
               </button>
@@ -377,16 +377,16 @@ export default function FullWorkPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-base/95 backdrop-blur-xl"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-bg-base/95 backdrop-blur-xl"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.97, opacity: 0, y: 8, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }}
-              className="relative w-full max-w-6xl h-full max-h-[90vh] bg-[#111] border border-[#2A2A2A] flex flex-col md:flex-row overflow-hidden shadow-2xl"
+              className="relative w-full max-w-6xl h-full max-h-[90vh] bg-bg-surface border border-border-subtle flex flex-col md:flex-row overflow-hidden shadow-2xl"
             >
               <button 
-                className="absolute top-6 right-6 z-50 p-2 text-white/50 hover:text-gold transition-colors"
+                className="absolute top-6 right-6 z-50 p-2 text-text-secondary hover:text-accent-orange transition-colors"
                 onClick={() => setSelectedProject(null)}
               >
                 <X size={24} />
@@ -413,7 +413,7 @@ export default function FullWorkPage() {
 
                 {/* Subtle View High-Fidelity overlay on hover */}
                 <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-10">
-                  <div className="border border-gold px-4 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-gold bg-base/95 shadow-xl">
+                  <div className="border border-accent-orange px-4 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-accent-orange bg-bg-base/95 shadow-xl">
                     {language === 'IT' ? 'VEDI AD ALTA RISOLUZIONE ✦' : 'VIEW HIGH-FIDELITY ✦'}
                   </div>
                 </div>
@@ -430,7 +430,7 @@ export default function FullWorkPage() {
                         const len = selectedProject.images.length;
                         setCurrentImageIndex((prev) => (prev - 1 + len) % len);
                       }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-gold hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-accent-orange hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
                       title="Previous Image"
                     >
                       <ChevronLeft size={16} />
@@ -442,7 +442,7 @@ export default function FullWorkPage() {
                         const len = selectedProject.images.length;
                         setCurrentImageIndex((prev) => (prev + 1) % len);
                       }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-gold hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-accent-orange hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
                       title="Next Image"
                     >
                       <ChevronRight size={16} />
@@ -457,7 +457,7 @@ export default function FullWorkPage() {
                             e.stopPropagation();
                             setCurrentImageIndex(i);
                           }}
-                          className={`w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === currentImageIndex ? 'bg-gold w-3' : 'bg-white/40 hover:bg-white/80'}`}
+                          className={`w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === currentImageIndex ? 'bg-accent-orange w-3' : 'bg-white/40 hover:bg-white/80'}`}
                           title={`Go to image ${i + 1}`}
                         />
                       ))}
@@ -471,13 +471,13 @@ export default function FullWorkPage() {
                 )}
               </div>
 
-              <div className="flex-1 p-8 md:p-16 flex flex-col justify-center overflow-y-auto max-h-[50vh] md:max-h-none text-white">
+              <div className="flex-1 p-8 md:p-16 flex flex-col justify-center overflow-y-auto max-h-[50vh] md:max-h-none text-text-primary">
                 <div className="overflow-hidden">
                   <motion.span 
                     initial={{ y: "100%" }}
                     animate={{ y: 0 }}
                     transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                    className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-4 block"
+                    className="font-mono text-accent-orange text-[10px] uppercase tracking-[0.4em] mb-4 block"
                   >
                     {language === 'IT' ? 'Archivio' : 'Archive'} / {getGenreLabel(selectedProject.type)}
                   </motion.span>
@@ -489,7 +489,7 @@ export default function FullWorkPage() {
                     initial={{ y: "100%" }}
                     animate={{ y: 0 }}
                     transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                    className="font-display text-5xl md:text-7xl uppercase leading-none tracking-tighter"
+                    className="font-display text-5xl md:text-7xl uppercase leading-none tracking-tighter text-text-primary"
                   >
                     {getProjectTitle(selectedProject.title)}
                   </motion.h2>
@@ -499,42 +499,42 @@ export default function FullWorkPage() {
                   initial={{ width: 0 }}
                   animate={{ width: 48 }}
                   transition={{ delay: 0.6, duration: 0.8 }}
-                  className="h-1 bg-gold mb-8" 
+                  className="h-1 bg-accent-purple mb-8" 
                 />
 
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.7, duration: 0.8 }}
-                  className="font-mono text-[13px] text-white/60 leading-relaxed mb-10 max-w-sm"
+                  className="font-mono text-[13px] text-text-secondary leading-relaxed mb-10 max-w-sm"
                 >
                   {language === 'IT' 
                     ? `Un'esplorazione cinematografica in ${getProjectTitle(selectedProject.title).toLowerCase()}. Questo progetto si concentra sull'interazione delle luci naturali e le profonde tessiture della condizione umana.`
                     : `A cinematic exploration into ${selectedProject.title.toLowerCase()}. This project focuses on the interplay of natural highlights and the deep textures of the human condition.`}
                 </motion.p>
                 
-                <div className="grid grid-cols-2 gap-8 border-t border-[#2A2A2A] pt-10">
+                <div className="grid grid-cols-2 gap-8 border-t border-border-subtle pt-10">
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8, duration: 0.6 }}
                   >
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('project.location')}</span>
-                    <span className="font-display italic text-xl">{t('project.location.val')}</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 mb-2">{t('project.location')}</span>
+                    <span className="font-display italic text-xl text-text-primary">{language === 'IT' ? 'Archivi Internazionali' : 'International Archive'}</span>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.9, duration: 0.6 }}
                   >
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('project.format')}</span>
-                    <span className="font-display italic text-xl">{t('project.format.val')}</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 mb-2">{t('project.format')}</span>
+                    <span className="font-display italic text-xl text-text-primary">{language === 'IT' ? 'Digitale 35mm' : '35mm Digital'}</span>
                   </motion.div>
                 </div>
                 
                 {/* AI Image Generation Suite */}
-                <div className="mt-8 pt-8 border-t border-[#2A2A2A]">
-                  <h3 className="font-mono text-gold text-[10px] uppercase tracking-[0.35em] mb-4 flex items-center gap-1.5">
+                <div className="mt-8 pt-8 border-t border-border-subtle">
+                  <h3 className="font-mono text-accent-purple text-[10px] uppercase tracking-[0.35em] mb-4 flex items-center gap-1.5 font-bold">
                     <span className="animate-pulse">✦</span> {t('ai.studio.title')}
                   </h3>
                   
@@ -542,7 +542,7 @@ export default function FullWorkPage() {
                     <div className={`mb-4 px-3 py-2 border rounded font-mono text-[9px] tracking-wider uppercase ${
                       newImageNotification.startsWith('ERROR') 
                       ? 'border-red-500/30 bg-red-500/5 text-red-400' 
-                      : 'border-gold/30 bg-gold/5 text-gold'
+                      : 'border-accent-purple/30 bg-accent-purple/5 text-accent-purple'
                     }`}>
                       {newImageNotification}
                     </div>
@@ -553,7 +553,7 @@ export default function FullWorkPage() {
                       {/* Dynamic Editorial Suggestions */}
                       {selectedProject && PROMPT_SUGGESTIONS_BY_GENRE[selectedProject.type] && (
                         <div>
-                          <span className="block font-mono text-[9px] uppercase tracking-[0.2em] text-gold mb-2 flex items-center gap-1">
+                          <span className="block font-mono text-[9px] uppercase tracking-[0.2em] text-accent-purple mb-2 flex items-center gap-1 font-medium">
                             <span>✦</span> {t('ai.studio.recommendations')} ({getGenreLabel(selectedProject.type)})
                           </span>
                           <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
@@ -562,14 +562,14 @@ export default function FullWorkPage() {
                                 key={i}
                                 type="button"
                                 onClick={() => setPrompt(suggestedPrompt)}
-                                className={`text-[9px] text-left px-3 py-2 font-mono uppercase tracking-wider rounded border text-[#F2EDE6]/80 transition-all cursor-pointer block truncate w-full group/chip ${
+                                className={`text-[9px] text-left px-3 py-2 font-mono uppercase tracking-wider rounded border text-text-secondary opacity-80 transition-all cursor-pointer block truncate w-full group/chip ${
                                   prompt === suggestedPrompt
-                                    ? 'border-gold bg-gold/5 text-gold'
-                                    : 'border-[#2A2A2A] bg-transparent hover:border-gold/30 hover:text-white'
+                                    ? 'border-accent-purple bg-accent-purple/5 text-accent-purple'
+                                    : 'border-border-subtle bg-transparent hover:border-accent-purple/30 hover:text-text-primary'
                                 }`}
                                 title={suggestedPrompt}
                               >
-                                <span className={`mr-2 group-hover/chip:text-gold transition-colors ${prompt === suggestedPrompt ? 'text-gold' : 'text-[#F2EDE6]/20'}`}>▶</span>
+                                <span className={`mr-2 group-hover/chip:text-accent-purple transition-colors ${prompt === suggestedPrompt ? 'text-accent-purple' : 'opacity-20 text-text-secondary'}`}>▶</span>
                                 {suggestedPrompt}
                               </button>
                             ))}
@@ -644,40 +644,40 @@ export default function FullWorkPage() {
 
                       {/* Live Combined Formula Preview */}
                       {(prompt.trim() || selectedMood || selectedComposition) && (
-                        <div className="bg-[#0e0e0e]/60 border border-[#2A2A2A] rounded p-2.5 font-mono text-[8.5px] text-[#F2EDE6]/50 uppercase tracking-widest leading-relaxed">
-                          <span className="text-gold font-bold">{t('ai.studio.formula')}</span>{' '}
+                        <div className="bg-bg-base/60 border border-border-subtle rounded-none p-2.5 font-mono text-[8.5px] text-[#F2EDE6]/50 uppercase tracking-widest leading-relaxed">
+                          <span className="text-accent-orange font-bold">{t('ai.studio.formula')}</span>{' '}
                           <span>{prompt.trim() || t('ai.studio.empty_subject')}</span>
                           {selectedComposition && (
-                            <span className="text-white">
+                            <span className="text-text-primary">
                               , {COMPOSITION_PRESETS.find((c) => c.phrase === selectedComposition)?.name}
                             </span>
                           )}
                           {selectedMood && (
-                            <span className="text-white">
+                            <span className="text-text-primary">
                               , {MOOD_PRESETS.find((m) => m.phrase === selectedMood)?.name}
                             </span>
                           )}
-                          <span className="text-gold/60">, {selectedStyle}</span>
+                          <span className="text-accent-purple/60">, {selectedStyle}</span>
                         </div>
                       )}
 
                       <button
                         onClick={handleGenerateImage}
                         disabled={!prompt.trim()}
-                        className="w-full text-center font-mono text-[9px] leading-none uppercase tracking-widest border border-gold hover:bg-gold hover:text-black transition-all duration-300 py-3 rounded text-gold bg-transparent font-medium disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gold cursor-pointer flex items-center justify-center gap-2 animate-[fadeIn_0.5s_ease-out]"
+                        className="w-full text-center font-mono text-[9px] leading-none uppercase tracking-widest border border-accent-orange hover:bg-accent-orange hover:text-black transition-all duration-300 py-3 rounded-none text-accent-orange bg-transparent font-medium disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-accent-orange cursor-pointer flex items-center justify-center gap-2 animate-[fadeIn_0.5s_ease-out]"
                       >
                         {t('ai.studio.btn_generate')}
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-4 bg-[#141414] border border-gold/20 rounded p-5 relative overflow-hidden animate-pulse">
-                      <div className="flex justify-between font-mono text-[9px] uppercase tracking-wider text-white">
-                        <span className="text-gold">{loadingText}</span>
-                        <span className="text-gold font-bold">{generationProgress}%</span>
+                    <div className="space-y-4 bg-bg-surface border border-accent-purple/20 rounded-none p-5 relative overflow-hidden animate-pulse">
+                      <div className="flex justify-between font-mono text-[9px] uppercase tracking-wider text-text-primary">
+                        <span className="text-accent-purple">{loadingText}</span>
+                        <span className="text-accent-purple font-bold">{generationProgress}%</span>
                       </div>
                       <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gold transition-all duration-200" 
+                          className="h-full bg-accent-purple transition-all duration-200" 
                           style={{ width: `${generationProgress}%` }}
                         />
                       </div>
@@ -690,9 +690,9 @@ export default function FullWorkPage() {
                 
                 {/* Related Narrative Archive */}
                 {relatedProjects.length > 0 && selectedProject && (
-                  <div className="mt-12 pt-8 border-t border-[#2A2A2A] animate-[fadeIn_0.6s_ease-out]">
+                  <div className="mt-12 pt-8 border-t border-border-subtle animate-[fadeIn_0.6s_ease-out]">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-mono text-gold text-[10px] uppercase tracking-[0.35em] flex items-center gap-1.5">
+                      <h4 className="font-mono text-accent-orange text-[10px] uppercase tracking-[0.35em] flex items-center gap-1.5 font-bold">
                         <span>✦</span> {language === 'IT' ? 'Storie Correlate' : 'Related Narratives'}
                       </h4>
                       <span className="font-mono text-[8px] text-[#F2EDE6]/30 uppercase tracking-widest leading-none">
@@ -710,7 +710,7 @@ export default function FullWorkPage() {
                           className="group text-left focus:outline-none cursor-pointer w-full"
                           title={`Navigate to ${getProjectTitle(item.title)}`}
                         >
-                          <div className="relative aspect-square overflow-hidden border border-[#2A2A2A] group-hover:border-gold/50 transition-colors duration-500 bg-[#0d0d0d]">
+                          <div className="relative aspect-square overflow-hidden border border-border-subtle group-hover:border-accent-orange/50 transition-colors duration-500 bg-bg-surface">
                             <img 
                               loading="lazy"
                               referrerPolicy="no-referrer"
@@ -718,20 +718,20 @@ export default function FullWorkPage() {
                               alt={getProjectTitle(item.title)} 
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
-                            <div className="absolute inset-0 bg-base/40 group-hover:bg-transparent transition-colors duration-500" />
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-500" />
                             
                             {/* Subtle view indicator overlay on hover */}
-                            <div className="absolute inset-x-0 bottom-0 bg-black/80 py-1 px-1.5 border-t border-[#2A2A2A] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <p className="font-mono text-[7.5px] text-gold uppercase tracking-[0.2em] text-center">
+                            <div className="absolute inset-x-0 bottom-0 bg-black/80 py-1 px-1.5 border-t border-border-subtle opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <p className="font-mono text-[7.5px] text-accent-orange uppercase tracking-[0.2em] text-center">
                                 {language === 'IT' ? 'VEDI SCHEDA' : 'VIEW ARCHIVE'}
                               </p>
                             </div>
                           </div>
                           <div className="mt-2.5">
-                            <p className="font-mono text-[8.5px] text-white/50 group-hover:text-gold transition-colors uppercase tracking-widest truncate leading-tight">
+                            <p className="font-mono text-[8.5px] text-text-primary group-hover:text-accent-orange transition-colors duration-300 uppercase tracking-widest truncate leading-tight">
                               {getProjectTitle(item.title)}
                             </p>
-                            <p className="font-mono text-[7px] text-white/20 uppercase tracking-widest mt-0.5">
+                            <p className="font-mono text-[7px] text-text-secondary opacity-50 uppercase tracking-widest mt-0.5">
                               {getGenreLabel(item.type)}
                             </p>
                           </div>

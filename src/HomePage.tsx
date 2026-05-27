@@ -32,21 +32,12 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
   const { getProjectTitle, getGenreLabel } = useLanguage();
   const ref = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], [-20, 20]);
-
-  // High-fidelity hover mouse tracking dynamic springs
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const mouseScale = useMotionValue(1.05);
-
-  const hoverX = useSpring(mouseX, { stiffness: 90, damping: 22 });
-  const hoverY = useSpring(mouseY, { stiffness: 90, damping: 22 });
-  const hoverScale = useSpring(mouseScale, { stiffness: 90, damping: 22 });
+  
+  const isHovered = hoveredImageId === item.id;
+  const isAnchor = idx === 0;
+  
+  // High-fidelity responsive aspect scaling
+  const aspectRatioClass = isAnchor ? 'aspect-[2/3]' : 'aspect-square';
 
   return (
     <motion.div
@@ -61,93 +52,46 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
         delay: idx * 0.05,
         layout: { duration: 0.4 }
       }}
-      className={`relative group cursor-none overflow-hidden [transform-style:preserve-3d] border-r border-b border-[#2A2A2A] p-6 ${item.size === 'large' ? 'md:col-span-3' : 'md:col-span-2'}`}
+      className={`reveal p-tile p-item relative group cursor-none overflow-hidden bg-bg-surface border border-border-subtle hover:border-border-purple ${aspectRatioClass} ${item.size === 'large' ? 'md:col-span-3' : 'md:col-span-2'}`}
+      data-title={getProjectTitle(item.title)}
+      data-year="2024"
+      data-cat={getGenreLabel(item.type)}
       onClick={() => setSelectedProject(item)}
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 to 0.5
-        const y = (e.clientY - rect.top) / rect.height - 0.5; // -0.5 to 0.5
-        mouseX.set(x * 16); // subtle shift (16px max displacement)
-        mouseY.set(y * 16);
-      }}
       onMouseEnter={() => {
         setHoveredImageId(item.id);
         setIsHoveringImage(true);
-        mouseScale.set(1.15); // Luxurious lens-zoom on hover
       }}
       onMouseLeave={() => {
         setHoveredImageId(null);
         setIsHoveringImage(false);
-        mouseX.set(0);
-        mouseY.set(0);
-        mouseScale.set(1.05); // Smoothly rest to default bounds
       }}
     >
-      <div 
-        className={`relative transition-all duration-700 overflow-hidden aspect-[4/5] ${item.size === 'large' ? 'md:aspect-video' : 'md:aspect-[4/5]'}`}
-        style={{
-          filter: hoveredImageId === null 
-            ? 'grayscale(0%) opacity(1)' 
-            : hoveredImageId === item.id 
-              ? 'grayscale(0%) opacity(1)' 
-              : 'grayscale(100%) opacity(0.2) blur(2px)'
-        }}
-      >
-        <div className="absolute inset-x-0 -inset-y-12 overflow-hidden pointer-events-none">
-          <motion.div style={{ y }} className="w-full h-full relative bg-[#0C0C0C]">
-            {!isLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-[#070707] z-10">
-                <div className="w-12 h-12 border border-[#2A2A2A] flex items-center justify-center animate-pulse">
-                  <div className="w-2.5 h-2.5 bg-gold/20 rounded-full" />
-                </div>
-              </div>
-            )}
-            <motion.div 
-              initial={{ filter: 'blur(15px)', opacity: 0 }}
-              animate={{ 
-                filter: isLoaded ? 'blur(0px)' : 'blur(15px)',
-                opacity: isLoaded ? 1 : 0
-              }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full h-full"
-            >
-              <motion.img 
-                style={{ x: hoverX, y: hoverY, scale: hoverScale }}
-                loading="lazy" 
-                referrerPolicy="no-referrer"
-                src={resolveAsset(item.image)} 
-                alt={item.title} 
-                onLoad={() => setIsLoaded(true)}
-                className="w-full h-full object-cover" 
-              />
-            </motion.div>
-          </motion.div>
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#070707] z-10">
+          <div className="w-12 h-12 border border-border-subtle flex items-center justify-center animate-pulse">
+            <div className="w-2.5 h-2.5 bg-accent-purple/20 rounded-full" />
+          </div>
         </div>
-        
-        {/* Subtle Gold Grid Overlay on Hover */}
-        <div className="absolute inset-0 pointer-events-none z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-          {/* Vertical Grid Lines */}
-          <div className="absolute left-1/3 top-0 bottom-0 w-[0.5px] bg-gold/30 origin-top scale-y-0 group-hover:scale-y-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[50ms]" />
-          <div className="absolute left-2/3 top-0 bottom-0 w-[0.5px] bg-gold/30 origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[150ms]" />
-          
-          {/* Horizontal Grid Lines */}
-          <div className="absolute top-1/3 left-0 right-0 h-[0.5px] bg-gold/30 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[100ms]" />
-          <div className="absolute top-2/3 left-0 right-0 h-[0.5px] bg-gold/30 origin-right scale-x-0 group-hover:scale-x-100 transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] delay-[200ms]" />
-          
-          {/* Minimalist Viewfinder Framing Brackets */}
-          <div className="absolute top-3 left-3 w-2 h-2 border-t border-l border-gold/40 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
-          <div className="absolute top-3 right-3 w-2 h-2 border-t border-r border-gold/40 transition-transform duration-500 group-hover:-translate-x-0.5 group-hover:translate-y-0.5" />
-          <div className="absolute bottom-3 left-3 w-2 h-2 border-b border-l border-gold/40 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          <div className="absolute bottom-3 right-3 w-2 h-2 border-b border-r border-gold/40 transition-transform duration-500 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5" />
-        </div>
+      )}
+      
+      <img 
+        loading="lazy" 
+        referrerPolicy="no-referrer"
+        src={resolveAsset(item.image)} 
+        alt={item.title} 
+        onLoad={() => setIsLoaded(true)}
+      />
+
+      {/* Caption overlay */}
+      <div className="p-cap">
+        <span className="p-cat">{getGenreLabel(item.type)}</span>
+        <span className="p-title">{getProjectTitle(item.title)}</span>
+        <span className="p-year">2024</span>
       </div>
-      <motion.div 
-        style={{ opacity: useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]) }}
-        className="mt-4 flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-[#F2EDE6]/40"
-      >
-        <span className="bg-[#0D0D0D] px-2 py-1">0{idx+1} / {getGenreLabel(item.type)}</span>
-        <span className="text-[#F2EDE6]/60 group-hover:text-gold transition-colors">{getProjectTitle(item.title)}</span>
-      </motion.div>
+
+      {/* Corner accents */}
+      <div className="p-corner p-corner--tl"></div>
+      <div className="p-corner p-corner--br"></div>
     </motion.div>
   );
 };
@@ -291,20 +235,24 @@ export default function HomePage() {
       )}
 
       <header 
-        className={`fixed top-0 left-0 w-full h-20 z-50 transition-all duration-300 px-6 md:px-10 flex items-center justify-between font-mono text-xs tracking-widest uppercase ${
-          isScrolled || isMobileMenuOpen ? "bg-base py-3 editorial-border-b" : "bg-transparent"
+        style={{
+          backdropFilter: isScrolled || isMobileMenuOpen ? "blur(14px) saturate(140%)" : "none",
+          background: isScrolled || isMobileMenuOpen ? "rgba(10,10,10,0.78)" : "transparent"
+        }}
+        className={`fixed top-0 left-0 w-full h-20 z-50 transition-all duration-300 px-6 md:px-10 flex items-center justify-between font-mono text-[11px] tracking-[0.14em] uppercase ${
+          isScrolled || isMobileMenuOpen ? "py-3 border-b border-border-subtle" : "bg-transparent"
         }`}
       >
         <Link to="/" className="flex items-center gap-2 group cursor-pointer lg:flex-1">
           <img 
             src={resolveAsset("/src/assets/images/Logo/309609011_502923838511265_499136910629103232_n-Photoroom.png")} 
             alt="NEP.PHOTO" 
-            className="h-12 md:h-14 w-auto object-contain select-none transition-transform duration-300 group-hover:scale-105"
+            className="h-12 md:h-14 max-h-[32px] md:max-h-[44px] w-auto object-contain select-none transition-transform duration-300 group-hover:scale-105"
             referrerPolicy="no-referrer"
           />
         </Link>
         
-        <nav className="hidden md:flex items-center justify-center gap-10 text-[11px] opacity-70 lg:flex-1">
+        <nav className="hidden md:flex items-center justify-center gap-10 text-[11px] lg:flex-1">
           {[
             { key: 'nav.about', id: 'about' },
             { key: 'nav.work', id: 'work' },
@@ -315,7 +263,7 @@ export default function HomePage() {
               key={item.key} 
               href={`#${item.id}`} 
               onClick={(e) => handleScrollToSection(e, item.id)}
-              className="hover:text-gold transition-colors hover:opacity-100"
+              className="text-text-secondary hover:text-text-primary tracking-[0.14em] transition-colors duration-250 nav-hover-line pb-1"
             >
               {t(item.key as any)}
             </a>
@@ -329,7 +277,8 @@ export default function HomePage() {
           </MagneticButton>
           
           <button 
-            className="md:hidden text-white/70 hover:text-gold p-2 transition-colors"
+            id="mobile-menu-toggle"
+            className="md:hidden text-text-secondary hover:text-accent-orange p-2 transition-colors duration-300 flex items-center justify-center min-w-[44px] min-h-[44px]"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -415,6 +364,9 @@ export default function HomePage() {
 
       <main>
         <section className="relative h-screen overflow-hidden bg-[#0a0a0a]">
+          {/* PURPLE GLOW ACCENT behind hero headline */}
+          <div className="absolute w-[600px] h-[600px] bg-[radial-gradient(ellipse,_rgba(139,47,201,0.12)_0%,_transparent_70%)] -top-[200px] -left-[100px] pointer-events-none z-10 filter blur-[40px]" />
+
           <div className="absolute inset-0 z-0">
             <FadingVideo 
               src={heroVideo}
@@ -422,7 +374,15 @@ export default function HomePage() {
               opacity={heroOpacity}
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0D0D0D]/40 via-transparent to-[#0D0D0D]/60 z-10" />
+          
+          {/* Refined gradient overlay with branding tint */}
+          <div 
+            className="absolute inset-0 z-10 pointer-events-none" 
+            style={{
+              background: "linear-gradient(135deg, rgba(139,47,201,0.08) 0%, rgba(10,10,10,0.0) 40%, rgba(10,10,10,0.7) 85%, rgba(10,10,10,1.0) 100%)"
+            }}
+          />
+
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none px-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -430,7 +390,12 @@ export default function HomePage() {
               transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col items-center"
             >
-              <h1 className="font-display text-[11vw] sm:text-7xl md:text-9xl flex items-center gap-3 sm:gap-8 overflow-hidden py-4 sm:py-10 text-white">
+              {/* BRAND EYEBROW */}
+              <span className="font-mono text-[11px] tracking-[0.22em] uppercase text-accent-orange mb-6 flex items-center gap-[10px] [&::before]:content-[''] [&::before]:inline-block [&::before]:w-[28px] [&::before]:h-[1px] [&::before]:bg-accent-orange">
+                NEP PHOTO GALLERY
+              </span>
+
+              <h1 className="split-head font-display text-[11vw] sm:text-7xl md:text-9xl leading-[0.95] tracking-[-0.03em] font-light text-text-primary flex items-center gap-3 sm:gap-8 overflow-hidden py-4 sm:py-10">
                 <motion.span 
                   className="leading-none"
                   style={{ x: useTransform(scrollY, [0, 500], [0, -60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
@@ -441,7 +406,7 @@ export default function HomePage() {
                   initial={{ height: 0 }}
                   animate={{ height: "4rem" }}
                   transition={{ delay: 0.5, duration: 1 }}
-                  className="w-[1px] sm:h-24 bg-gold/50 mx-1 sm:mx-4"
+                  className="w-[1px] sm:h-24 bg-accent-purple/50 mx-1 sm:mx-4"
                 ></motion.span>
                 <motion.span 
                   className="leading-none"
@@ -454,12 +419,13 @@ export default function HomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.5 }}
                 transition={{ delay: 1, duration: 1 }}
-                className="mt-2 font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.6em] text-center max-w-[280px] sm:max-w-none leading-relaxed text-white whitespace-pre-line"
+                className="mt-2 font-mono text-[8px] sm:text-[10px] uppercase tracking-[0.6em] text-center max-w-[280px] sm:max-w-none leading-relaxed text-text-primary whitespace-pre-line"
               >
                 {t('hero.subtitle')}
               </motion.div>
             </motion.div>
           </div>
+
           <motion.div 
             style={{ opacity: heroOpacity }}
             initial={{ opacity: 0 }}
@@ -467,23 +433,19 @@ export default function HomePage() {
             transition={{ delay: 1.5, duration: 1 }}
             className="absolute bottom-12 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4"
           >
-            <span className="font-mono text-[9px] tracking-[0.5em] uppercase opacity-40 text-white">{language === 'IT' ? 'Scoperta' : 'Discovery'}</span>
-            <div className="relative w-px h-16 sm:h-20 bg-white/10 overflow-hidden">
-              <motion.div 
-                animate={{ y: ["-100%", "100%"] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 w-full bg-gradient-to-b from-transparent via-gold to-transparent"
-              />
+            <span className="font-mono text-[9px] tracking-[0.5em] uppercase opacity-40 text-text-primary">{language === 'IT' ? 'Scoperta' : 'Discovery'}</span>
+            <div className="relative w-[1.5px] h-10 bg-white/10 overflow-hidden">
+              <div className="absolute top-0 left-0 w-[1.5px] h-10 bg-accent-purple pulse-line" />
             </div>
           </motion.div>
         </section>
 
-        <section className="h-12 border-y border-[#2A2A2A] bg-base flex items-center overflow-hidden whitespace-nowrap">
+        <section className="h-12 border-y border-border-subtle bg-bg-base flex items-center overflow-hidden whitespace-nowrap">
           <div className="flex animate-[marquee_30s_linear_infinite]">
             {[...GENRES, ...GENRES].map((genre, idx) => (
               <div key={idx} className="flex items-center px-10 gap-10">
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">{getGenreLabel(genre)}</span>
-                <span className="text-gold">•</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60 text-text-secondary">{getGenreLabel(genre)}</span>
+                <span className="text-accent-orange">•</span>
               </div>
             ))}
           </div>
@@ -500,12 +462,16 @@ export default function HomePage() {
             <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none opacity-90 w-full lg:w-auto">
               {language === 'IT' ? <>Archivio<br />Editoriale.</> : <>Editorial<br />Archive.</>}
             </h2>
-            <div className="flex flex-wrap gap-2 sm:gap-4 font-mono text-[10px] tracking-widest w-full lg:w-auto">
+            <div className="flex flex-wrap gap-2 sm:gap-4 font-mono text-[11px] tracking-[0.14em] uppercase w-full lg:w-auto">
               {GENRES.map(filter => (
                 <button 
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
-                  className={`px-3 sm:px-4 py-2 border transition-all ${activeFilter === filter ? 'border-gold text-gold' : 'border-[#2A2A2A] text-white/40 hover:border-white/30'}`}
+                  className={`px-3 sm:px-4 py-2 transition-all duration-300 rounded-none cursor-none border ${
+                    activeFilter === filter 
+                      ? 'border-accent-purple text-accent-purple bg-accent-purple-dim' 
+                      : 'border-border-subtle text-text-secondary hover:border-accent-orange hover:text-accent-orange bg-transparent'
+                  }`}
                 >
                   {getGenreLabel(filter)}
                 </button>
@@ -513,7 +479,7 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-0 [perspective:1000px] border-t border-l border-[#2A2A2A]">
+          <div className="p-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-[4px] [perspective:1000px] bg-bg-base">
             <AnimatePresence mode="popLayout" initial={false}>
               {filteredItems.map((item, idx) => (
                 <PortfolioItemCard 
@@ -536,36 +502,34 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="bg-base py-20 px-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-            {STATS.map((stat, idx) => (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.1 }}
-                className="flex flex-col gap-2"
-              >
-                <span className={`font-mono text-4xl md:text-5xl ${idx === 0 ? 'text-gold' : 'text-[#F2EDE6]'}`}>
-                  <Counter target={stat.target} suffix={stat.suffix} decimals={stat.decimals} />
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-widest opacity-50">
-                  {stat.label === 'Shoots' ? t('stats.shoots') :
-                   stat.label === 'Countries' ? t('stats.countries') :
-                   stat.label === '48hr Delivery' ? t('stats.delivery') :
-                   stat.label === 'Rating' ? t('stats.rating') : stat.label}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+        <section className="bg-bg-surface py-20 px-8 border-y border-border-subtle md:divide-x md:divide-accent-purple/15 md:grid md:grid-cols-4 md:text-center flex flex-col gap-12 md:gap-0">
+          {STATS.map((stat, idx) => (
+            <motion.div 
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: idx * 0.1 }}
+              className="reveal stat-block flex flex-col gap-2 items-center justify-center p-4"
+            >
+              <span data-val={stat.target} className="font-mono text-4xl md:text-5xl text-text-primary tracking-[-0.02em] font-light">
+                <Counter target={stat.target} suffix={stat.suffix} decimals={stat.decimals} />
+              </span>
+              <span className="font-mono text-[11px] tracking-[0.14em] uppercase text-text-secondary">
+                {stat.label === 'Shoots' ? t('stats.shoots') :
+                 stat.label === 'Countries' ? t('stats.countries') :
+                 stat.label === '48hr Delivery' ? t('stats.delivery') :
+                 stat.label === 'Rating' ? t('stats.rating') : stat.label}
+              </span>
+            </motion.div>
+          ))}
         </section>
 
         <motion.section 
           id="process" 
-          whileHover={{ scale: 1.01 }}
+          whileHover={{ scale: 1.005 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-[#111111] py-32 px-10 editorial-border-t origin-center"
+          className="bg-bg-base py-32 px-10 border-t border-border-subtle origin-center"
         >
           <div className="max-w-7xl mx-auto">
             <motion.div 
@@ -573,7 +537,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="text-[11px] font-mono text-gold mb-12 tracking-[0.4em] uppercase"
+              className="section-eyebrow"
             >
               {language === 'IT' ? 'IL METODO' : 'THE METHOD'}
             </motion.div>
@@ -613,15 +577,15 @@ export default function HomePage() {
                       layout: { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
                     }}
                     onClick={() => setActiveProcessStep(isActive ? null : step.id)}
-                    className={`relative cursor-pointer transition-all duration-500 overflow-hidden ${
+                    className={`relative cursor-pointer transition-all duration-500 overflow-hidden rounded-none ${
                       isActive 
-                        ? 'flex-[2] md:flex-[3] bg-base/40 p-8 border border-gold/20' 
-                        : (isAnyActive ? 'flex-1 opacity-20 hover:opacity-40 grayscale pointer-events-auto' : 'flex-1 md:flex-1 p-0')
+                        ? 'flex-[2] md:flex-[3] bg-bg-surface p-8 border border-accent-purple shadow-[0_0_24px_rgba(139,47,201,0.15)]' 
+                        : (isAnyActive ? 'flex-1 opacity-20 hover:opacity-40 grayscale pointer-events-auto bg-transparent' : 'flex-1 md:flex-1 p-6 border border-border-subtle hover:border-accent-purple bg-bg-surface')
                     }`}
                   >
                     <motion.div layout className="flex items-center gap-6 mb-6">
-                      <span className="font-mono text-xs opacity-40">0{step.id}</span>
-                      <span className={`font-display italic text-3xl transition-colors duration-500 ${isActive ? 'text-gold' : 'group-hover:text-gold'}`}>
+                      <span className="font-mono text-xs opacity-40 text-text-secondary">0{step.id}</span>
+                      <span className={`font-display italic text-3xl transition-colors duration-500 ${isActive ? 'text-accent-orange' : 'text-text-primary group-hover:text-accent-orange'}`}>
                         {step.title}
                       </span>
                     </motion.div>
@@ -632,7 +596,7 @@ export default function HomePage() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="font-mono text-[10px] leading-relaxed text-[#F2EDE6]/50 tracking-wider max-w-[200px]"
+                          className="font-mono text-[10px] leading-relaxed text-text-secondary tracking-wider max-w-[200px]"
                         >
                           {step.short}
                         </motion.p>
@@ -645,17 +609,17 @@ export default function HomePage() {
                           transition={{ delay: 0.2 }}
                           className="flex flex-col gap-6"
                         >
-                          <p className="font-mono text-[11px] leading-relaxed text-[#F2EDE6]/80 tracking-wider">
+                          <p className="font-mono text-[11px] leading-relaxed text-text-secondary tracking-wider">
                             {step.long}
                           </p>
                           <motion.div 
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4 }}
-                            className="pt-6 border-t border-gold/10"
+                            className="pt-6 border-t border-accent-purple/10"
                           >
-                            <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-gold/40">{t('process.subtitle')}</span>
-                            <p className="font-display italic text-xl mt-2">{t('process.deliverable')}</p>
+                            <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-accent-purple">{t('process.subtitle')}</span>
+                            <p className="font-display italic text-xl mt-2 text-text-primary">{t('process.deliverable')}</p>
                           </motion.div>
                         </motion.div>
                       )}
@@ -664,7 +628,7 @@ export default function HomePage() {
                       <motion.button
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="absolute top-4 right-4 text-white/20 hover:text-gold"
+                        className="absolute top-4 right-4 text-text-secondary hover:text-accent-orange transition-colors duration-300"
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveProcessStep(null);
@@ -680,10 +644,10 @@ export default function HomePage() {
           </div>
         </motion.section>
 
-        <section id="about" ref={aboutSectionRef} className="py-24 sm:py-40 px-6 sm:px-10 bg-base border-y border-[#2A2A2A]">
+        <section id="about" ref={aboutSectionRef} className="py-24 sm:py-40 px-6 sm:px-10 bg-bg-base border-y border-border-subtle">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-16 md:gap-24 items-center">
             <div 
-              className="relative w-full max-w-md aspect-[3/4] cursor-ew-resize select-none overflow-hidden border border-[#2A2A2A] touch-none"
+              className="relative w-full max-w-md aspect-[3/4] cursor-ew-resize select-none overflow-hidden border border-border-subtle touch-none"
               onMouseMove={(e) => {
                 if (e.buttons === 1) {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -723,24 +687,24 @@ export default function HomePage() {
                 />
               </div>
               <div 
-                className="absolute top-0 bottom-0 w-px bg-gold z-10"
+                className="absolute top-0 bottom-0 w-px bg-accent-orange z-10"
                 style={{ left: `${beforeAfterProgress * 100}%` }}
               >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-base border border-gold rounded-full flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 bg-gold rounded-full" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-bg-surface border border-accent-orange rounded-full flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-accent-orange rounded-full" />
                 </div>
               </div>
-              <div className="absolute bottom-6 left-6 z-10 font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 bg-base border border-gold text-gold">
+              <div className="absolute bottom-6 left-6 z-10 font-mono text-[10px] uppercase tracking-[0.2em] px-4 py-2 bg-bg-base border border-accent-orange text-accent-orange rounded-none">
                 {language === 'IT' ? 'RIVELA FOTO GREZZA' : 'HOLD TO REVEAL RAW'}
               </div>
             </div>
 
             <div className="flex-1 text-center md:text-left text-white">
-              <span className="font-mono text-gold text-[10px] sm:text-[11px] uppercase tracking-[0.4em] mb-6 block">{t('about.ethos')}</span>
+              <span className="font-mono text-accent-orange text-[10px] sm:text-[11px] uppercase tracking-[0.4em] mb-6 block">{t('about.ethos')}</span>
               <h2 className="font-display text-4xl sm:text-6xl mb-8 sm:mb-10 uppercase leading-[1.1] tracking-tighter">
                 {language === 'IT' ? <>Il Sottofondo Romantico.<br className="hidden sm:block" />L'Osservatore Meccanico.</> : <>The Romantic Subject.<br className="hidden sm:block" />The Mechanical Observer.</>}
               </h2>
-              <p className="font-mono text-xs sm:text-[13px] text-white/50 leading-relaxed max-w-md mb-8 mx-auto md:mx-0">
+              <p className="font-mono text-xs sm:text-[13px] text-text-secondary leading-relaxed max-w-md mb-8 mx-auto md:mx-0">
                 {language === 'IT' 
                   ? 'Respingiamo le convenzioni. Ogni commissione è un evento cinematografico, che sfrutta le ombre per narrare vicende che la luce tenta di celare. Il nostro approccio è silenzioso, intimo e radicato nella tradizione noir.' 
                   : 'We reject the standard. Every commission is a cinematic event, utilizing shadows to tell stories that light often hides. Our process is quiet, intentional, and rooted in the traditions of film noir.'}
@@ -751,7 +715,7 @@ export default function HomePage() {
                 <button
                   id="about-expand-btn"
                   onClick={() => setAboutExpanded(!aboutExpanded)}
-                  className="group flex items-center gap-3 px-6 py-3 border border-white/20 hover:border-gold bg-transparent text-white hover:text-gold transition-all duration-300 rounded-none font-mono text-[11px] uppercase tracking-[0.2em] cursor-pointer"
+                  className="group flex items-center gap-3 px-6 py-3 border border-border-subtle hover:border-accent-purple bg-transparent text-text-primary hover:text-accent-purple transition-all duration-300 rounded-none font-mono text-[11px] uppercase tracking-[0.2em] cursor-none"
                 >
                   <span>{aboutExpanded ? t('about.expand_btn.less') : t('about.expand_btn.more')}</span>
                   <motion.span
@@ -759,7 +723,7 @@ export default function HomePage() {
                     transition={{ duration: 0.3 }}
                     className="inline-block"
                   >
-                    <ArrowDown className="w-3.5 h-3.5 text-gold" id="about-expand-icon" />
+                    <ArrowDown className="w-3.5 h-3.5 text-accent-purple" id="about-expand-icon" />
                   </motion.span>
                 </button>
               </div>
@@ -773,32 +737,32 @@ export default function HomePage() {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden mb-10 max-w-lg mx-auto md:mx-0 text-left border-l border-gold/40 pl-6 space-y-5"
+                    className="overflow-hidden mb-10 max-w-lg mx-auto md:mx-0 text-left border-l border-accent-purple/40 pl-6 space-y-5"
                   >
-                    <h3 className="font-display text-xl sm:text-2xl text-gold italic uppercase tracking-wider mb-2">
+                    <h3 className="font-display text-xl sm:text-2xl text-accent-purple italic uppercase tracking-wider mb-2">
                       {t('about.extended_bio.title')}
                     </h3>
-                    <p className="font-mono text-xs text-white/70 leading-relaxed">
+                    <p className="font-mono text-xs text-text-secondary leading-relaxed">
                       {t('about.extended_bio.p1')}
                     </p>
-                    <p className="font-mono text-xs text-white/70 leading-relaxed">
+                    <p className="font-mono text-xs text-text-secondary leading-relaxed">
                       {t('about.extended_bio.p2')}
                     </p>
-                    <p className="font-mono text-xs text-white/70 leading-relaxed">
+                    <p className="font-mono text-xs text-text-secondary leading-relaxed">
                       {t('about.extended_bio.p3')}
                     </p>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <div className="flex gap-10 sm:gap-16 pt-10 border-t border-[#2A2A2A] justify-center md:justify-start">
+              <div className="flex gap-10 sm:gap-16 pt-10 border-t border-border-subtle justify-center md:justify-start">
                 <div>
-                  <span className="block font-display text-2xl mb-2 italic text-gold">{t('about.eye.title')}</span>
-                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.3em]">{t('about.eye.subtitle')}</span>
+                  <span className="block font-display text-2xl mb-2 italic text-accent-orange">{t('about.eye.title')}</span>
+                  <span className="font-mono text-[9px] text-text-secondary uppercase tracking-[0.3em]">{t('about.eye.subtitle')}</span>
                 </div>
                 <div>
-                  <span className="block font-display text-2xl mb-2 italic text-gold">{t('about.lab.title')}</span>
-                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.3em]">{t('about.lab.subtitle')}</span>
+                  <span className="block font-display text-2xl mb-2 italic text-accent-purple">{language === 'IT' ? '600D' : '600D'}</span>
+                  <span className="font-mono text-[9px] text-text-secondary uppercase tracking-[0.3em]">{t('about.lab.subtitle')}</span>
                 </div>
               </div>
             </div>
@@ -814,9 +778,9 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.9, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
-                className="flex flex-col gap-8 text-white"
+                className="reveal t-card flex flex-col gap-8 text-text-primary"
               >
-                <p className="font-display text-2xl italic leading-relaxed text-paper/90">
+                <p className="font-display text-[16px] italic leading-[1.5] text-text-primary font-light">
                   "{language === 'IT' ? (
                     t.author === 'Elena Rossi' ? 'Ogni fotogramma catturato da Nep sembra un ricordo che non sapevo di avere. Pura magia cinematografica.' :
                     t.author === 'Marc Jacobs' ? "L'occhio per i dettagli e il modo in cui viene utilizzata la luce sono a dir poco maestria artistica." :
@@ -824,9 +788,9 @@ export default function HomePage() {
                   ) : t.text}"
                 </p>
                 <div className="mt-auto">
-                  <div className="h-px w-8 bg-gold mb-4" />
-                  <span className="block font-mono text-[11px] uppercase tracking-widest">{t.author}</span>
-                  <span className="block font-mono text-[9px] text-white/30 uppercase tracking-[0.2em]">
+                  <div className="h-[0.5px] w-8 bg-accent-orange mb-4" />
+                  <span className="block font-mono text-[11px] uppercase tracking-[0.14em] text-accent-orange">{t.author}</span>
+                  <span className="block font-mono text-[10px] text-text-secondary tracking-[0.14em] uppercase">
                     {language === 'IT' ? (
                       t.type === 'Wedding' ? 'Cliente Matrimonio' :
                       t.type === 'Editorial' ? 'Cliente Editoriale' :
@@ -864,7 +828,7 @@ export default function HomePage() {
                     className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-base/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Instagram className="w-8 h-8 text-gold" />
+                    <Instagram className="w-8 h-8 text-accent-orange" />
                   </div>
                 </motion.div>
               );
@@ -872,13 +836,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-24 sm:py-40 px-6 sm:px-10 bg-[#111] text-center border-b border-white/5">
+        <section className="relative py-24 sm:py-40 px-6 sm:px-10 bg-[#111111] text-center border-b border-border-subtle overflow-hidden">
+          {/* PURPLE GLOW ACCENT behind CTA blocks */}
+          <div className="absolute w-[600px] h-[600px] bg-[radial-gradient(ellipse,_rgba(139,47,201,0.12)_0%,_transparent_70%)] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0 filter blur-[40px]" />
+          
           <motion.h2 
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="font-display text-4xl sm:text-7xl md:text-8xl mb-12 sm:mb-16 uppercase italic text-white"
+            className="relative z-10 font-display text-4xl sm:text-7xl md:text-8xl mb-12 sm:mb-16 uppercase italic text-text-primary"
           >
             Ready to be seen?
           </motion.h2>
@@ -887,7 +854,7 @@ export default function HomePage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8"
+            className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8"
           >
             <MagneticButton primary className="w-full sm:w-auto text-base font-display normal-case italic !px-8 sm:!px-12 !py-4 sm:!py-6 text-lg sm:text-xl" onClick={() => handleScrollToSection(undefined, 'contact')}>
               {language === 'IT' ? 'Prenota una Consulenza' : 'Book a Consultation'}
@@ -900,32 +867,32 @@ export default function HomePage() {
           </motion.div>
         </section>
 
-        <section id="contact" className="py-24 sm:py-40 px-6 sm:px-10 bg-base editorial-border-t">
+        <section id="contact" className="py-24 sm:py-40 px-6 sm:px-10 bg-bg-base border-t border-border-subtle">
           <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20">
-            <div className="flex-1 text-white">
+            <div className="flex-1 text-text-primary">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8 }}
               >
-                <span className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-6 block">{t('contact.inquiries')}</span>
-                <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none mb-10">
+                <span className="font-mono text-accent-orange text-[10px] uppercase tracking-[0.4em] mb-6 block">{t('contact.inquiries')}</span>
+                <h2 className="font-display text-5xl sm:text-7xl uppercase leading-none mb-10 text-text-primary">
                   {language === 'IT' ? <>Inizia il<br />Dialogo.</> : <>Start the<br />Dialogue.</>}
                 </h2>
-                <p className="font-mono text-xs sm:text-[13px] text-white/50 leading-relaxed max-w-sm mb-12">
+                <p className="font-mono text-xs sm:text-[13px] text-text-secondary leading-relaxed max-w-sm mb-12">
                   {language === 'IT' 
                     ? "Il nostro archivio è curato per chi valorizza l'occhio meccanico e il soggetto romantico. Inviaci la tua visione e blocchiamo il fotogramma insieme." 
                     : "Our archive is curated for those who value the mechanical eye and the romantic subject. Send us your vision, and let's lock the frame."}
                 </p>
-                <div className="flex flex-col gap-8 border-t border-[#2A2A2A] pt-12">
+                <div className="flex flex-col gap-8 border-t border-border-subtle pt-12">
                   <div>
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('contact.email')}</span>
-                    <span className="font-display italic text-2xl hover:text-gold transition-colors cursor-pointer text-white">archive@nep.photo</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 mb-2">{t('contact.email')}</span>
+                    <span className="font-display italic text-2xl hover:text-accent-orange transition-colors cursor-pointer text-text-primary">archive@nep.photo</span>
                   </div>
                   <div>
-                    <span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">{t('contact.location')}</span>
-                    <span className="font-display italic text-2xl text-white">Milano, IT • Via Tortona 35</span>
+                    <span className="block font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 mb-2">{t('contact.location')}</span>
+                    <span className="font-display italic text-2xl text-text-primary">Milano, IT • Via Tortona 35</span>
                   </div>
                 </div>
               </motion.div>
@@ -938,17 +905,17 @@ export default function HomePage() {
                     key="success"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="h-full flex flex-col items-center justify-center text-center p-10 border border-gold/20 bg-gold/5"
+                    className="h-full flex flex-col items-center justify-center text-center p-10 border border-accent-purple/20 bg-accent-purple/5"
                   >
-                    <span className="font-display text-4xl italic text-gold mb-6">{t('contact.received')}</span>
-                    <p className="font-mono text-xs text-white/50 tracking-widest max-w-[280px]">
+                    <span className="font-display text-4xl italic text-accent-purple mb-6">{t('contact.received')}</span>
+                    <p className="font-mono text-xs text-text-secondary tracking-widest max-w-[280px]">
                       {language === 'IT' 
                         ? 'La tua visione è stata archiviata. I nostri curatori risponderanno a breve.' 
                         : 'Your vision has been archived. Our curators will respond within the cycle.'}
                     </p>
                     <button 
                       onClick={() => setFormStatus('idle')}
-                      className="mt-10 font-mono text-[10px] uppercase tracking-[0.4em] text-gold hover:text-white transition-colors"
+                      className="mt-10 font-mono text-[10px] uppercase tracking-[0.4em] text-accent-purple hover:text-text-primary transition-colors duration-300"
                     >
                       {language === 'IT' ? 'Nuovo Messaggio •' : 'New Message •'}
                     </button>
@@ -968,22 +935,22 @@ export default function HomePage() {
                     className="flex flex-col gap-10"
                   >
                     <div className="relative group">
-                      <label htmlFor="full-identity" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">
+                      <label htmlFor="full-identity" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 group-focus-within:text-accent-orange transition-colors duration-300">
                         {language === 'IT' ? 'Identità Completa' : 'Full Identity'}
                       </label>
-                      <input required id="full-identity" name="name" type="text" placeholder={language === 'IT' ? 'INSERISCI IL TUO NOME' : 'ENTER YOUR NAME'} className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 text-white" />
+                      <input required id="full-identity" name="name" type="text" placeholder={language === 'IT' ? 'INSERISCI IL TUO NOME' : 'ENTER YOUR NAME'} className="w-full bg-transparent border-b border-border-subtle py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-accent-orange transition-colors duration-300 placeholder:text-text-secondary/20 text-text-primary" />
                     </div>
                     <div className="relative group">
-                      <label htmlFor="return-address" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">
+                      <label htmlFor="return-address" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 group-focus-within:text-accent-orange transition-colors duration-300">
                         {language === 'IT' ? 'Indirizzo di Risposta' : 'Return Address'}
                       </label>
-                      <input required id="return-address" name="email" type="email" placeholder={language === 'IT' ? 'INDIRIZZO EMAIL' : 'EMAIL ADDRESS'} className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 text-white" />
+                      <input required id="return-address" name="email" type="email" placeholder={language === 'IT' ? 'INDIRIZZO EMAIL' : 'EMAIL ADDRESS'} className="w-full bg-transparent border-b border-border-subtle py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-accent-orange transition-colors duration-300 placeholder:text-text-secondary/20 text-text-primary" />
                     </div>
                     <div className="relative group">
-                      <label htmlFor="proposition" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-white/30 group-focus-within:text-gold transition-colors">
+                      <label htmlFor="proposition" className="absolute -top-3 left-0 font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 group-focus-within:text-accent-orange transition-colors duration-300">
                         {language === 'IT' ? 'La Proposta' : 'The Proposition'}
                       </label>
-                      <textarea required id="proposition" name="message" rows={4} placeholder={language === 'IT' ? 'DESCRIVI LA TUA VISIONE' : 'DESCRIBE YOUR VISION'} className="w-full bg-transparent border-b border-[#2A2A2A] py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-gold transition-colors placeholder:text-white/10 resize-none text-white" />
+                      <textarea required id="proposition" name="message" rows={4} placeholder={language === 'IT' ? 'DESCRIVI LA TUA VISIONE' : 'DESCRIBE YOUR VISION'} className="w-full bg-transparent border-b border-border-subtle py-4 font-mono text-[11px] uppercase tracking-widest focus:outline-none focus:border-accent-orange transition-colors duration-300 placeholder:text-text-secondary/20 resize-none text-text-primary" />
                     </div>
                     <div className="pt-6">
                       <MagneticButton primary className="!px-16 !py-6 text-sm font-bold w-full sm:w-auto disabled:opacity-50">
@@ -1000,11 +967,11 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="h-24 md:h-20 w-full bg-base editorial-border-t flex flex-col md:flex-row items-center justify-between px-10 z-50 py-4 gap-6">
-        <div className="text-[10px] font-mono opacity-40 uppercase tracking-widest text-white">© 2026 NEP PHOTOGRAPHY STUDIO</div>
+      <footer className="h-24 md:h-20 w-full bg-bg-base border-t border-border-subtle flex flex-col md:flex-row items-center justify-between px-10 z-50 py-4 gap-6">
+        <div className="text-[10px] font-mono opacity-40 uppercase tracking-widest text-text-primary">© 2026 NEP PHOTOGRAPHY STUDIO</div>
         <div className="flex gap-8 text-[10px] font-mono opacity-60 uppercase tracking-widest">
-          <a href="#" className="hover:text-gold transition-colors text-white">Privacy</a>
-          <a href="#" className="hover:text-gold transition-colors text-white">Terms</a>
+          <a href="#" className="hover:text-accent-orange transition-all duration-300 text-text-primary">Privacy</a>
+          <a href="#" className="hover:text-accent-orange transition-all duration-300 text-text-primary">Terms</a>
         </div>
       </footer>
 
@@ -1015,15 +982,15 @@ export default function HomePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-base/95 backdrop-blur-xl"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-bg-base/95 backdrop-blur-xl"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-6xl h-full max-h-[90vh] bg-[#111] border border-[#2A2A2A] flex flex-col md:flex-row overflow-hidden shadow-2xl"
+              className="relative w-full max-w-6xl h-full max-h-[90vh] bg-bg-surface border border-border-subtle flex flex-col md:flex-row overflow-hidden shadow-2xl"
             >
-              <button className="absolute top-6 right-6 z-50 p-2 text-white/50 hover:text-gold transition-colors" onClick={() => setSelectedProject(null)}><X size={24} /></button>
+              <button className="absolute top-6 right-6 z-50 p-2 text-text-secondary hover:text-accent-orange transition-colors" onClick={() => setSelectedProject(null)}><X size={24} /></button>
               <div 
                 className="relative w-full md:w-3/5 h-[40vh] md:h-auto overflow-hidden bg-black/20 group/carousel select-none cursor-pointer"
                 onClick={() => {
@@ -1048,7 +1015,7 @@ export default function HomePage() {
 
                 {/* Subtle View High-Fidelity overlay on hover */}
                 <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none z-10">
-                  <div className="border border-gold px-4 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-gold bg-base/95 shadow-xl">
+                  <div className="border border-accent-orange px-4 py-2 font-mono text-[9px] uppercase tracking-[0.2em] text-accent-orange bg-bg-base/95 shadow-xl">
                     {language === 'IT' ? 'VEDI AD ALTA RISOLUZIONE ✦' : 'VIEW HIGH-FIDELITY ✦'}
                   </div>
                 </div>
@@ -1065,7 +1032,7 @@ export default function HomePage() {
                         const len = selectedProject.images.length;
                         setCurrentImageIndex((prev) => (prev - 1 + len) % len);
                       }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-gold hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-accent-orange hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
                       title="Previous Image"
                     >
                       <ChevronLeft size={16} />
@@ -1077,7 +1044,7 @@ export default function HomePage() {
                         const len = selectedProject.images.length;
                         setCurrentImageIndex((prev) => (prev + 1) % len);
                       }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-gold hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/45 hover:bg-accent-orange hover:text-black hover:scale-105 text-white backdrop-blur-md transition-all duration-300 opacity-0 group-hover/carousel:opacity-100 focus:opacity-100 flex items-center justify-center border border-white/5 shadow-lg cursor-pointer"
                       title="Next Image"
                     >
                       <ChevronRight size={16} />
@@ -1092,7 +1059,7 @@ export default function HomePage() {
                             e.stopPropagation();
                             setCurrentImageIndex(i);
                           }}
-                          className={`w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === currentImageIndex ? 'bg-orange w-3' : 'bg-white/40 hover:bg-white/80'}`}
+                          className={`w-1.5 h-1.5 rounded-full transition-all duration-300 cursor-pointer ${i === currentImageIndex ? 'bg-accent-orange w-3' : 'bg-white/40 hover:bg-white/80'}`}
                           title={`Go to image ${i + 1}`}
                         />
                       ))}
@@ -1105,18 +1072,18 @@ export default function HomePage() {
                   </>
                 )}
               </div>
-              <div className="flex-1 p-8 md:p-16 flex flex-col justify-center overflow-y-auto max-h-[50vh] md:max-h-none text-white">
+              <div className="flex-1 p-8 md:p-16 flex flex-col justify-center overflow-y-auto max-h-[50vh] md:max-h-none text-text-primary">
                 <div className="overflow-hidden">
-                  <motion.span initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="font-mono text-gold text-[10px] uppercase tracking-[0.4em] mb-4 block">Archive / {selectedProject.type}</motion.span>
+                  <motion.span initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="font-mono text-accent-orange text-[10px] uppercase tracking-[0.4em] mb-4 block">Archive / {selectedProject.type}</motion.span>
                 </div>
                 <div className="overflow-hidden mb-8">
-                  <motion.h2 key={selectedProject.title} initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="font-display text-5xl md:text-7xl uppercase leading-none tracking-tighter">{selectedProject.title}</motion.h2>
+                  <motion.h2 key={selectedProject.title} initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }} className="font-display text-5xl md:text-7xl uppercase leading-none tracking-tighter text-text-primary">{selectedProject.title}</motion.h2>
                 </div>
-                <motion.div initial={{ width: 0 }} animate={{ width: 48 }} transition={{ delay: 0.6, duration: 0.8 }} className="h-1 bg-gold mb-8" />
-                <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.8 }} className="font-mono text-[13px] text-white/60 leading-relaxed mb-10 max-w-sm">A cinematic exploration into {selectedProject.title.toLowerCase()}. This project focuses on the interplay of natural highlights and the deep textures of the human condition.</motion.p>
-                <div className="grid grid-cols-2 gap-8 border-t border-[#2A2A2A] pt-10">
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }}><span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Location</span><span className="font-display italic text-xl">International Archive</span></motion.div>
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.6 }}><span className="block font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Format</span><span className="font-display italic text-xl">35mm Digital</span></motion.div>
+                <motion.div initial={{ width: 0 }} animate={{ width: 48 }} transition={{ delay: 0.6, duration: 0.8 }} className="h-1 bg-accent-purple mb-8" />
+                <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.8 }} className="font-mono text-[13px] text-text-secondary leading-relaxed mb-10 max-w-sm">A cinematic exploration into {selectedProject.title.toLowerCase()}. This project focuses on the interplay of natural highlights and the deep textures of the human condition.</motion.p>
+                <div className="grid grid-cols-2 gap-8 border-t border-border-subtle pt-10">
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }}><span className="block font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 mb-2">Location</span><span className="font-display italic text-xl text-text-primary">International Archive</span></motion.div>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.6 }}><span className="block font-mono text-[9px] uppercase tracking-widest text-text-secondary opacity-40 mb-2">Format</span><span className="font-display italic text-xl text-text-primary">35mm Digital</span></motion.div>
                 </div>
                 <div className="mt-12 flex items-center gap-4">
                   <MagneticButton onClick={handlePrevProject} className="!p-4 flex items-center justify-center"><ChevronLeft size={18} /></MagneticButton>

@@ -35,10 +35,10 @@ export const MagneticButton = ({ children, className, primary = false, onClick }
         onClick={onClick}
         animate={{ x: position.x, y: position.y }}
         transition={{ type: 'spring', stiffness: 150, damping: 15, mass: 0.1 }}
-        className={`px-8 py-4 transition-colors font-mono text-sm tracking-widest uppercase ${
+        className={`cta-btn px-8 py-4 transition-all duration-300 font-mono text-[11px] tracking-[0.14em] uppercase rounded-none select-none cursor-none ${
           primary 
-            ? "bg-orange text-black font-bold border border-orange hover:bg-opacity-90" 
-            : "border border-orange text-orange hover:bg-orange hover:text-black"
+            ? "border border-accent-purple text-accent-purple bg-transparent hover:bg-accent-purple hover:text-text-primary hover:shadow-[0_0_24px_rgba(139,47,201,0.3)]" 
+            : "border border-border-subtle text-text-secondary hover:border-accent-orange hover:text-accent-orange bg-transparent"
         } ${className}`}
       >
         {children}
