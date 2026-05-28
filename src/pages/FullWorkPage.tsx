@@ -46,9 +46,20 @@ const PortfolioItemCard: React.FC<FullWorkPortfolioItemProps> = ({
     >
       <div className="relative aspect-[4/5] overflow-hidden border border-border-subtle bg-bg-surface">
         {!isLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-bg-base z-10">
-            <div className="w-12 h-12 border border-border-subtle flex items-center justify-center animate-pulse">
-              <div className="w-2.5 h-2.5 bg-accent-purple/20 rounded-full" />
+          <div className="absolute inset-0 bg-bg-base z-10 flex flex-col justify-between p-6 overflow-hidden">
+            <div className="absolute inset-0 skeleton-shimmer opacity-30" />
+            
+            <div className="relative z-10 flex justify-between items-start">
+              <div className="w-4 h-4 border-t border-l border-white/10" />
+              <div className="w-4 h-4 border-t border-r border-white/10" />
+            </div>
+
+            <div className="relative z-10 flex flex-col gap-2 mt-auto">
+              <div className="h-2 w-12 skeleton-shimmer opacity-45 rounded-[1px]" />
+              <div className="flex justify-between items-end">
+                <div className="h-3 w-24 skeleton-shimmer opacity-45 rounded-[1px]" />
+                <div className="h-2 w-5 skeleton-shimmer opacity-45 rounded-[1px]" />
+              </div>
             </div>
           </div>
         )}

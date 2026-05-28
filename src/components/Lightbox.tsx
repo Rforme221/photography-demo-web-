@@ -165,10 +165,32 @@ export function Lightbox({ images, initialIndex, isOpen, onClose, title }: Light
           >
             {/* Ambient Loading indicator */}
             {loading && (
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <div className="relative w-12 h-12 flex items-center justify-center">
-                  <div className="absolute border border-t-gold border-r-transparent border-b-transparent border-l-transparent w-full h-full rounded-full animate-spin duration-1000" />
-                  <span className="font-mono text-[8px] tracking-widest text-gold/60 uppercase">NEP</span>
+              <div className="absolute inset-0 flex items-center justify-center z-10 p-6 md:p-12 pointer-events-none">
+                <div className="w-full max-w-[840px] aspect-[16/10] bg-[#080808] border border-white/5 relative flex flex-col justify-between p-6 overflow-hidden shadow-2xl">
+                  <div className="absolute inset-0 skeleton-shimmer opacity-25" />
+                  
+                  {/* Framing markers */}
+                  <div className="relative z-10 flex justify-between items-start">
+                    <div className="w-5 h-5 border-t border-l border-white/10" />
+                    <div className="w-5 h-5 border-t border-r border-white/10" />
+                  </div>
+                  
+                  <div className="relative z-10 text-center flex flex-col items-center justify-center my-auto py-12 gap-3">
+                    <span className="font-mono text-[9px] tracking-[0.3em] text-white/40 uppercase">
+                      DEVELOPING CHROMATIC SEED
+                    </span>
+                    <div className="h-[1px] w-32 bg-white/5 overflow-hidden relative">
+                      <div className="absolute top-0 left-0 h-full w-12 bg-accent-orange/50 skeleton-shimmer" />
+                    </div>
+                  </div>
+
+                  <div className="relative z-10 flex justify-between items-end">
+                    <div className="w-5 h-5 border-b border-l border-white/10" />
+                    <span className="font-mono text-[8px] text-white/20 tracking-widest uppercase">
+                      NEP.PHOTO / FRAME_SYS
+                    </span>
+                    <div className="w-5 h-5 border-b border-r border-white/10" />
+                  </div>
                 </div>
               </div>
             )}

@@ -43,8 +43,9 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
     <motion.div
       ref={ref}
       layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       transition={{ 
         duration: 0.8,
@@ -67,9 +68,20 @@ const PortfolioItemCard: React.FC<HomePagePortfolioItemProps> = ({
       }}
     >
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#070707] z-10">
-          <div className="w-12 h-12 border border-border-subtle flex items-center justify-center animate-pulse">
-            <div className="w-2.5 h-2.5 bg-accent-purple/20 rounded-full" />
+        <div className="absolute inset-0 bg-[#070707] z-10 flex flex-col justify-between p-6 overflow-hidden">
+          <div className="absolute inset-0 skeleton-shimmer opacity-30" />
+          
+          <div className="relative z-10 flex justify-between items-start">
+            <div className="w-5 h-5 border-t border-l border-white/10" />
+            <div className="w-5 h-5 border-t border-r border-white/10" />
+          </div>
+
+          <div className="relative z-10 flex flex-col gap-2 mt-auto">
+            <div className="h-2 w-14 skeleton-shimmer opacity-45 rounded-[1px]" />
+            <div className="flex justify-between items-end">
+              <div className="h-4 w-28 skeleton-shimmer opacity-45 rounded-[1px]" />
+              <div className="h-2 w-6 skeleton-shimmer opacity-45 rounded-[1px]" />
+            </div>
           </div>
         </div>
       )}
@@ -395,21 +407,21 @@ export default function HomePage() {
                 NEP PHOTO GALLERY
               </span>
 
-              <h1 className="split-head font-display text-[11vw] sm:text-7xl md:text-9xl leading-[0.95] tracking-[-0.03em] font-light text-text-primary flex items-center gap-3 sm:gap-8 overflow-hidden py-4 sm:py-10">
+              <h1 className="split-head font-display text-[11vw] sm:text-7xl md:text-9xl leading-[0.95] tracking-[-0.03em] font-light text-text-primary flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 overflow-hidden py-4 sm:py-10 text-center">
                 <motion.span 
-                  className="leading-none"
+                  className="w leading-none"
                   style={{ x: useTransform(scrollY, [0, 500], [0, -60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
                 >
                   {t('hero.title.frame')}
                 </motion.span>
                 <motion.span 
                   initial={{ height: 0 }}
-                  animate={{ height: "4rem" }}
+                  animate={{ height: "3.5rem" }}
                   transition={{ delay: 0.5, duration: 1 }}
-                  className="w-[1px] sm:h-24 bg-accent-purple/50 mx-1 sm:mx-4"
+                  className="w-[1px] bg-accent-purple/50 mx-1 sm:mx-4 my-2 sm:my-0"
                 ></motion.span>
                 <motion.span 
-                  className="leading-none"
+                  className="w leading-none"
                   style={{ x: useTransform(scrollY, [0, 500], [0, 60]), filter: useTransform(scrollY, [0, 500], ['blur(0px)', 'blur(8px)']) }}
                 >
                   {t('hero.title.everything')}
@@ -502,36 +514,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="bg-bg-surface py-20 px-8 border-y border-border-subtle md:divide-x md:divide-accent-purple/15 md:grid md:grid-cols-4 md:text-center flex flex-col gap-12 md:gap-0">
-          {STATS.map((stat, idx) => (
-            <motion.div 
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: idx * 0.1 }}
-              className="reveal stat-block flex flex-col gap-2 items-center justify-center p-4"
-            >
-              <span data-val={stat.target} className="font-mono text-4xl md:text-5xl text-text-primary tracking-[-0.02em] font-light">
-                <Counter target={stat.target} suffix={stat.suffix} decimals={stat.decimals} />
-              </span>
-              <span className="font-mono text-[11px] tracking-[0.14em] uppercase text-text-secondary">
-                {stat.label === 'Shoots' ? t('stats.shoots') :
-                 stat.label === 'Countries' ? t('stats.countries') :
-                 stat.label === '48hr Delivery' ? t('stats.delivery') :
-                 stat.label === 'Rating' ? t('stats.rating') : stat.label}
-              </span>
-            </motion.div>
-          ))}
+        <section className="bg-bg-surface py-12 sm:py-20 border-y border-border-subtle overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-10 w-full">
+            <div className="grid grid-cols-4 divide-x divide-accent-purple/15 text-center">
+              {STATS.map((stat, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: idx * 0.1 }}
+                  className="reveal stat-block flex flex-col gap-1 sm:gap-2 items-center justify-center p-1 sm:p-4"
+                >
+                  <span data-val={stat.target} className="font-mono text-2xl sm:text-4xl md:text-5xl text-text-primary tracking-[-0.02em] font-light">
+                    <Counter target={stat.target} suffix={stat.suffix} decimals={stat.decimals} />
+                  </span>
+                  <span className="font-mono text-[8px] sm:text-[11px] tracking-[0.1em] sm:tracking-[0.14em] uppercase text-text-secondary">
+                    {stat.label === 'Shoots' ? t('stats.shoots') :
+                     stat.label === 'Countries' ? t('stats.countries') :
+                     stat.label === '48hr Delivery' ? t('stats.delivery') :
+                     stat.label === 'Rating' ? t('stats.rating') : stat.label}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </section>
 
         <motion.section 
           id="process" 
           whileHover={{ scale: 1.005 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-bg-base py-32 px-10 border-t border-border-subtle origin-center"
+          className="bg-bg-base py-32 border-t border-border-subtle origin-center"
         >
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 w-full overflow-hidden">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -541,7 +557,7 @@ export default function HomePage() {
             >
               {language === 'IT' ? 'IL METODO' : 'THE METHOD'}
             </motion.div>
-            <div className="flex flex-col md:flex-row gap-10 md:gap-4 lg:gap-8 items-start">
+            <div className="flex flex-row md:flex-row gap-6 md:gap-4 lg:gap-8 items-stretch overflow-x-auto pb-6 md:pb-0 snap-x snap-mandatory hide-scrollbar">
               {[
                 { 
                   id: '01', 
@@ -577,7 +593,7 @@ export default function HomePage() {
                       layout: { duration: 0.5, ease: [0.22, 1, 0.36, 1] }
                     }}
                     onClick={() => setActiveProcessStep(isActive ? null : step.id)}
-                    className={`relative cursor-pointer transition-all duration-500 overflow-hidden rounded-none ${
+                    className={`relative cursor-pointer transition-all duration-500 overflow-hidden rounded-none flex-none w-[280px] sm:w-[320px] md:w-auto snap-center md:snap-none ${
                       isActive 
                         ? 'flex-[2] md:flex-[3] bg-bg-surface p-8 border border-accent-purple shadow-[0_0_24px_rgba(139,47,201,0.15)]' 
                         : (isAnyActive ? 'flex-1 opacity-20 hover:opacity-40 grayscale pointer-events-auto bg-transparent' : 'flex-1 md:flex-1 p-6 border border-border-subtle hover:border-accent-purple bg-bg-surface')
@@ -769,17 +785,18 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-32 px-6 max-w-7xl mx-auto overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
-            {TESTIMONIALS.map((t, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.9, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
-                className="reveal t-card flex flex-col gap-8 text-text-primary"
-              >
+        <section className="py-32 border-t border-border-subtle bg-bg-base overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 w-full">
+            <div className="flex flex-row md:grid md:grid-cols-3 gap-10 md:gap-20 overflow-x-auto pb-6 md:pb-0 snap-x snap-mandatory hide-scrollbar">
+              {TESTIMONIALS.map((t, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.9, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
+                  className="reveal t-card flex flex-col gap-8 text-text-primary flex-none w-[280px] sm:w-[320px] md:w-auto snap-center"
+                >
                 <p className="font-display text-[16px] italic leading-[1.5] text-text-primary font-light">
                   "{language === 'IT' ? (
                     t.author === 'Elena Rossi' ? 'Ogni fotogramma catturato da Nep sembra un ricordo che non sapevo di avere. Pura magia cinematografica.' :
@@ -801,9 +818,10 @@ export default function HomePage() {
               </motion.div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
         
-        <section className="py-24 bg-base border-y border-white/5 overflow-hidden">
+      <section className="py-24 bg-base border-y border-white/5 overflow-hidden">
           <div className="flex gap-4 px-4 overflow-x-scroll pb-8 md:pb-0 hide-scrollbar scroll-smooth snap-x md:justify-center">
             {[1, 2, 3, 4, 5, 6].map((i) => {
               const src = i === 1 
@@ -856,11 +874,11 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8"
           >
-            <MagneticButton primary className="w-full sm:w-auto text-base font-display normal-case italic !px-8 sm:!px-12 !py-4 sm:!py-6 text-lg sm:text-xl" onClick={() => handleScrollToSection(undefined, 'contact')}>
+            <MagneticButton primary className="w-full sm:w-auto font-display !normal-case italic text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl !px-4 xs:!px-6 sm:!px-10 md:!px-12 !py-3 sm:!py-4 md:!py-6 whitespace-nowrap" onClick={() => handleScrollToSection(undefined, 'contact')}>
               {language === 'IT' ? 'Prenota una Consulenza' : 'Book a Consultation'}
             </MagneticButton>
             <Link to="/work" className="w-full sm:w-auto">
-              <MagneticButton className="w-full sm:w-auto text-[11px]">
+              <MagneticButton className="w-full sm:w-auto text-[10px] sm:text-[11px] whitespace-nowrap !px-4 xs:!px-6 sm:!px-10 !py-3 sm:!py-4">
                 {language === 'IT' ? 'Vedi Archivio Lavori' : 'View Full Work'}
               </MagneticButton>
             </Link>

@@ -768,3 +768,95 @@ body.cur-cta #c-dot {
   .hero-media { transform: none !important; }
   body::after { animation: none !important; }
 }
+
+/* ───────────────────────────────────────────────────────────────────
+   06 · ACCESSIBILITY TOUCH TARGET ENFORCEMENT (44PX)
+   ─────────────────────────────────────────────────────────────────── */
+button,
+input,
+select,
+textarea {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+a {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Prevent inline narrative and flow-based typography links from stretching */
+p a,
+span a,
+li a,
+a.inline-link {
+  min-width: auto;
+  min-height: auto;
+  display: inline;
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   07 · PORTFOLIO GRID REFINEMENT (BELOW 480PX)
+   ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 479px) {
+  .p-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Force aspect-ratio adjustments of 3/4 for both anchor and secondary tiles */
+  .p-grid .p-item,
+  .p-grid .p-tile {
+    aspect-ratio: 3/4 !important;
+  }
+  
+  /* Ensure images fill the space completely without any overflow */
+  .p-grid .p-item img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   08 · HEADER LOGO PRECISE SCALE (44PX / 32PX)
+   ─────────────────────────────────────────────────────────────────── */
+header img[alt='NEP.PHOTO'] {
+  max-height: 32px !important;
+  width: auto !important;
+  object-fit: contain !important;
+}
+
+@media (min-width: 768px) {
+  header img[alt='NEP.PHOTO'] {
+    max-height: 44px !important;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────────
+   09 · SLEEK MINIMALIST SKELETON SCREEN ANIMATION
+   ─────────────────────────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #0d0d0d 25%,
+    #171717 50%,
+    #0d0d0d 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite linear;
+}
+
+
+

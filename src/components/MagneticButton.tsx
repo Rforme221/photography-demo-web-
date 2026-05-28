@@ -29,7 +29,7 @@ export const MagneticButton = ({ children, className, primary = false, onClick }
       ref={ref}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseOut}
-      className="magnetic-area inline-block"
+      className={`magnetic-area ${className?.includes('w-full') ? 'block w-full sm:inline-block sm:w-auto' : 'inline-block'}`}
     >
       <motion.button
         onClick={onClick}
@@ -37,7 +37,7 @@ export const MagneticButton = ({ children, className, primary = false, onClick }
         transition={{ type: 'spring', stiffness: 150, damping: 15, mass: 0.1 }}
         className={`cta-btn px-8 py-4 transition-all duration-300 font-mono text-[11px] tracking-[0.14em] uppercase rounded-none select-none cursor-none ${
           primary 
-            ? "border border-accent-purple text-accent-purple bg-transparent hover:bg-accent-purple hover:text-text-primary hover:shadow-[0_0_24px_rgba(139,47,201,0.3)]" 
+            ? "border border-accent-purple text-text-primary bg-transparent hover:bg-accent-purple hover:text-bg-base hover:shadow-[0_0_24px_rgba(139,47,201,0.3)]" 
             : "border border-border-subtle text-text-secondary hover:border-accent-orange hover:text-accent-orange bg-transparent"
         } ${className}`}
       >
