@@ -9,7 +9,7 @@ export const FadingVideo = ({ src, fallbackImage, opacity }: { src?: string, fal
         animate={{ scale: 1 }}
         transition={{ duration: 10, repeat: Infinity, repeatType: 'reverse' }}
         className="h-full w-full opacity-40 overflow-hidden"
-        style={{ opacity }}
+        style={{ opacity, fontFamily: 'Verdana' }}
       >
         <img 
           src={fallbackImage} 
@@ -24,7 +24,7 @@ export const FadingVideo = ({ src, fallbackImage, opacity }: { src?: string, fal
 
   return (
     <motion.div 
-      style={{ opacity }}
+      style={{ opacity, fontFamily: 'Verdana' }}
       className="absolute inset-0 z-0 h-full w-full overflow-hidden"
     >
       <video
